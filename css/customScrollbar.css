@@ -1,0 +1,217 @@
+/* ========================================
+   CUSTOM SCROLLBAR STYLES
+   Professional scrollbar customization for modern web applications
+   ======================================== */
+
+/* Webkit-based browsers (Chrome, Safari, Edge) */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+    transition: background 0.3s ease;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-corner {
+    background: #f1f1f1;
+  }
+  
+  /* Thin Scrollbar */
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 2px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+  }
+  
+  /* Dark Theme Scrollbar */
+  .scrollbar-dark::-webkit-scrollbar-track {
+    background: #374151;
+  }
+  
+  .scrollbar-dark::-webkit-scrollbar-thumb {
+    background: #6b7280;
+  }
+  
+  .scrollbar-dark::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+  }
+  
+  .scrollbar-dark::-webkit-scrollbar-corner {
+    background: #374151;
+  }
+  
+  /* Colored Scrollbar */
+  .scrollbar-primary::-webkit-scrollbar-thumb {
+    background: #3b82f6;
+  }
+  
+  .scrollbar-primary::-webkit-scrollbar-thumb:hover {
+    background: #2563eb;
+  }
+  
+  .scrollbar-success::-webkit-scrollbar-thumb {
+    background: #10b981;
+  }
+  
+  .scrollbar-success::-webkit-scrollbar-thumb:hover {
+    background: #059669;
+  }
+  
+  .scrollbar-warning::-webkit-scrollbar-thumb {
+    background: #f59e0b;
+  }
+  
+  .scrollbar-warning::-webkit-scrollbar-thumb:hover {
+    background: #d97706;
+  }
+  
+  .scrollbar-danger::-webkit-scrollbar-thumb {
+    background: #ef4444;
+  }
+  
+  .scrollbar-danger::-webkit-scrollbar-thumb:hover {
+    background: #dc2626;
+  }
+  
+  /* Gradient Scrollbar */
+  .scrollbar-gradient::-webkit-scrollbar-thumb {
+    background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+  }
+  
+  .scrollbar-gradient::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(45deg, #5a67d8 0%, #6b46c1 100%);
+  }
+  
+  /* Firefox Scrollbar */
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #c1c1c1 #f1f1f1;
+  }
+  
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: #d1d5db #f1f1f1;
+  }
+  
+  .scrollbar-dark {
+    scrollbar-color: #6b7280 #374151;
+  }
+  
+  .scrollbar-primary {
+    scrollbar-color: #3b82f6 #f1f1f1;
+  }
+  
+  .scrollbar-success {
+    scrollbar-color: #10b981 #f1f1f1;
+  }
+  
+  .scrollbar-warning {
+    scrollbar-color: #f59e0b #f1f1f1;
+  }
+  
+  .scrollbar-danger {
+    scrollbar-color: #ef4444 #f1f1f1;
+  }
+  
+  /* Hide Scrollbar */
+  .scrollbar-hidden {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hidden::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Smooth Scrolling */
+  .scroll-smooth {
+    scroll-behavior: smooth;
+  }
+  
+  /* Custom Scrollbar for Specific Elements */
+  .chat-container {
+    max-height: 400px;
+    overflow-y: auto;
+  }
+  
+  .chat-container::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .chat-container::-webkit-scrollbar-track {
+    background: #f8fafc;
+  }
+  
+  .chat-container::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+  }
+  
+  .chat-container::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
+  
+  /* Code Editor Style Scrollbar */
+  .code-editor::-webkit-scrollbar {
+    width: 12px;
+  }
+  
+  .code-editor::-webkit-scrollbar-track {
+    background: #1e293b;
+  }
+  
+  .code-editor::-webkit-scrollbar-thumb {
+    background: #475569;
+    border-radius: 6px;
+    border: 2px solid #1e293b;
+  }
+  
+  .code-editor::-webkit-scrollbar-thumb:hover {
+    background: #64748b;
+  }
+  
+  /* Usage Examples:
+     <div class="custom-scrollbar" style="height: 300px; overflow-y: auto;">
+       <p>Content with custom scrollbar...</p>
+     </div>
+     
+     <div class="scrollbar-thin scrollbar-primary scroll-smooth">
+       <p>Thin blue scrollbar with smooth scrolling...</p>
+     </div>
+     
+     <div class="scrollbar-dark">
+       <p>Dark theme scrollbar...</p>
+     </div>
+     
+     <div class="scrollbar-hidden">
+       <p>Hidden scrollbar but still scrollable...</p>
+     </div>
+     
+     <div class="chat-container">
+       <p>Chat messages with custom scrollbar...</p>
+     </div>
+     
+     <div class="code-editor">
+       <p>Code editor with specialized scrollbar...</p>
+     </div>
+  */
