@@ -1,0 +1,474 @@
+/* ========================================
+   CSS GRADIENTS LIBRARY
+   Professional gradient utilities for modern web development
+   ======================================== */
+
+/* ========================================
+   LINEAR GRADIENTS
+   ======================================== */
+
+/* Basic Linear Gradients */
+.gradient-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.gradient-secondary {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.gradient-success {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.gradient-warning {
+  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+}
+
+.gradient-danger {
+  background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+}
+
+.gradient-info {
+  background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+}
+
+/* Directional Linear Gradients */
+.gradient-to-right {
+  background: linear-gradient(to right, #667eea, #764ba2);
+}
+
+.gradient-to-left {
+  background: linear-gradient(to left, #667eea, #764ba2);
+}
+
+.gradient-to-top {
+  background: linear-gradient(to top, #667eea, #764ba2);
+}
+
+.gradient-to-bottom {
+  background: linear-gradient(to bottom, #667eea, #764ba2);
+}
+
+.gradient-to-top-right {
+  background: linear-gradient(to top right, #667eea, #764ba2);
+}
+
+.gradient-to-top-left {
+  background: linear-gradient(to top left, #667eea, #764ba2);
+}
+
+.gradient-to-bottom-right {
+  background: linear-gradient(to bottom right, #667eea, #764ba2);
+}
+
+.gradient-to-bottom-left {
+  background: linear-gradient(to bottom left, #667eea, #764ba2);
+}
+
+/* Angular Linear Gradients */
+.gradient-45deg {
+  background: linear-gradient(45deg, #667eea, #764ba2);
+}
+
+.gradient-90deg {
+  background: linear-gradient(90deg, #667eea, #764ba2);
+}
+
+.gradient-135deg {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+}
+
+.gradient-180deg {
+  background: linear-gradient(180deg, #667eea, #764ba2);
+}
+
+.gradient-225deg {
+  background: linear-gradient(225deg, #667eea, #764ba2);
+}
+
+.gradient-270deg {
+  background: linear-gradient(270deg, #667eea, #764ba2);
+}
+
+.gradient-315deg {
+  background: linear-gradient(315deg, #667eea, #764ba2);
+}
+
+/* Multi-color Linear Gradients */
+.gradient-rainbow {
+  background: linear-gradient(45deg, #ff0000, #ff8000, #ffff00, #80ff00, #00ff00, #00ff80, #00ffff, #0080ff, #0000ff, #8000ff, #ff00ff, #ff0080);
+}
+
+.gradient-sunset {
+  background: linear-gradient(45deg, #ff6b6b, #feca57, #48dbfb, #ff9ff3, #54a0ff);
+}
+
+.gradient-ocean {
+  background: linear-gradient(45deg, #667eea, #764ba2, #f093fb, #f5576c);
+}
+
+.gradient-forest {
+  background: linear-gradient(45deg, #11998e, #38ef7d, #56ab2f, #a8e6cf);
+}
+
+.gradient-fire {
+  background: linear-gradient(45deg, #ff416c, #ff4b2b, #ff6b6b, #feca57);
+}
+
+/* ========================================
+   RADIAL GRADIENTS
+   ======================================== */
+
+/* Basic Radial Gradients */
+.gradient-radial {
+  background: radial-gradient(circle, #667eea 0%, #764ba2 100%);
+}
+
+.gradient-radial-ellipse {
+  background: radial-gradient(ellipse, #667eea 0%, #764ba2 100%);
+}
+
+/* Positioned Radial Gradients */
+.gradient-radial-center {
+  background: radial-gradient(circle at center, #667eea 0%, #764ba2 100%);
+}
+
+.gradient-radial-top {
+  background: radial-gradient(circle at top, #667eea 0%, #764ba2 100%);
+}
+
+.gradient-radial-bottom {
+  background: radial-gradient(circle at bottom, #667eea 0%, #764ba2 100%);
+}
+
+.gradient-radial-left {
+  background: radial-gradient(circle at left, #667eea 0%, #764ba2 100%);
+}
+
+.gradient-radial-right {
+  background: radial-gradient(circle at right, #667eea 0%, #764ba2 100%);
+}
+
+.gradient-radial-top-left {
+  background: radial-gradient(circle at top left, #667eea 0%, #764ba2 100%);
+}
+
+.gradient-radial-top-right {
+  background: radial-gradient(circle at top right, #667eea 0%, #764ba2 100%);
+}
+
+.gradient-radial-bottom-left {
+  background: radial-gradient(circle at bottom left, #667eea 0%, #764ba2 100%);
+}
+
+.gradient-radial-bottom-right {
+  background: radial-gradient(circle at bottom right, #667eea 0%, #764ba2 100%);
+}
+
+/* Sized Radial Gradients */
+.gradient-radial-closest-side {
+  background: radial-gradient(circle closest-side, #667eea 0%, #764ba2 100%);
+}
+
+.gradient-radial-closest-corner {
+  background: radial-gradient(circle closest-corner, #667eea 0%, #764ba2 100%);
+}
+
+.gradient-radial-farthest-side {
+  background: radial-gradient(circle farthest-side, #667eea 0%, #764ba2 100%);
+}
+
+.gradient-radial-farthest-corner {
+  background: radial-gradient(circle farthest-corner, #667eea 0%, #764ba2 100%);
+}
+
+/* ========================================
+   CONIC GRADIENTS
+   ======================================== */
+
+.gradient-conic {
+  background: conic-gradient(from 0deg, #667eea, #764ba2, #f093fb, #667eea);
+}
+
+.gradient-conic-center {
+  background: conic-gradient(from 0deg at center, #667eea, #764ba2, #f093fb, #667eea);
+}
+
+.gradient-conic-top {
+  background: conic-gradient(from 0deg at top, #667eea, #764ba2, #f093fb, #667eea);
+}
+
+.gradient-conic-bottom {
+  background: conic-gradient(from 0deg at bottom, #667eea, #764ba2, #f093fb, #667eea);
+}
+
+.gradient-conic-left {
+  background: conic-gradient(from 0deg at left, #667eea, #764ba2, #f093fb, #667eea);
+}
+
+.gradient-conic-right {
+  background: conic-gradient(from 0deg at right, #667eea, #764ba2, #f093fb, #667eea);
+}
+
+/* ========================================
+   GRADIENT OVERLAYS
+   ======================================== */
+
+.gradient-overlay {
+  position: relative;
+}
+
+.gradient-overlay::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.8) 0%, rgba(118, 75, 162, 0.8) 100%);
+  z-index: 1;
+}
+
+.gradient-overlay-dark {
+  position: relative;
+}
+
+.gradient-overlay-dark::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.3) 100%);
+  z-index: 1;
+}
+
+.gradient-overlay-light {
+  position: relative;
+}
+
+.gradient-overlay-light::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0.3) 100%);
+  z-index: 1;
+}
+
+/* ========================================
+   GRADIENT TEXT
+   ======================================== */
+
+.gradient-text {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-text-rainbow {
+  background: linear-gradient(45deg, #ff0000, #ff8000, #ffff00, #80ff00, #00ff00, #00ff80, #00ffff, #0080ff, #0000ff, #8000ff, #ff00ff, #ff0080);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-text-sunset {
+  background: linear-gradient(45deg, #ff6b6b, #feca57, #48dbfb, #ff9ff3, #54a0ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ========================================
+   GRADIENT BORDERS
+   ======================================== */
+
+.gradient-border {
+  position: relative;
+  background: white;
+  border-radius: 8px;
+}
+
+.gradient-border::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 10px;
+  z-index: -1;
+}
+
+.gradient-border-rainbow {
+  position: relative;
+  background: white;
+  border-radius: 8px;
+}
+
+.gradient-border-rainbow::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, #ff0000, #ff8000, #ffff00, #80ff00, #00ff00, #00ff80, #00ffff, #0080ff, #0000ff, #8000ff, #ff00ff, #ff0080);
+  border-radius: 10px;
+  z-index: -1;
+}
+
+/* ========================================
+   GRADIENT BUTTONS
+   ======================================== */
+
+.btn-gradient {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-gradient:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+}
+
+.btn-gradient-rainbow {
+  background: linear-gradient(45deg, #ff0000, #ff8000, #ffff00, #80ff00, #00ff00, #00ff80, #00ffff, #0080ff, #0000ff, #8000ff, #ff00ff, #ff0080);
+  border: none;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-gradient-rainbow:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(255, 0, 0, 0.3);
+}
+
+/* ========================================
+   GRADIENT CARDS
+   ======================================== */
+
+.card-gradient {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  padding: 24px;
+  color: white;
+  box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+}
+
+.card-gradient-rainbow {
+  background: linear-gradient(45deg, #ff0000, #ff8000, #ffff00, #80ff00, #00ff00, #00ff80, #00ffff, #0080ff, #0000ff, #8000ff, #ff00ff, #ff0080);
+  border-radius: 12px;
+  padding: 24px;
+  color: white;
+  box-shadow: 0 8px 32px rgba(255, 0, 0, 0.3);
+}
+
+/* ========================================
+   GRADIENT ANIMATIONS
+   ======================================== */
+
+.gradient-animated {
+  background: linear-gradient(45deg, #667eea, #764ba2, #f093fb, #667eea);
+  background-size: 400% 400%;
+  animation: gradientShift 3s ease infinite;
+}
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.gradient-animated-rainbow {
+  background: linear-gradient(45deg, #ff0000, #ff8000, #ffff00, #80ff00, #00ff00, #00ff80, #00ffff, #0080ff, #0000ff, #8000ff, #ff00ff, #ff0080);
+  background-size: 400% 400%;
+  animation: gradientShift 3s ease infinite;
+}
+
+/* ========================================
+   GRADIENT UTILITIES
+   ======================================== */
+
+.gradient-transparent {
+  background: linear-gradient(135deg, transparent 0%, rgba(102, 126, 234, 0.1) 50%, transparent 100%);
+}
+
+.gradient-glass {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.gradient-mesh {
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.3) 0%, transparent 50%);
+}
+
+/* ========================================
+   RESPONSIVE GRADIENTS
+   ======================================== */
+
+@media (max-width: 768px) {
+  .gradient-responsive {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
+}
+
+@media (min-width: 769px) {
+  .gradient-responsive {
+    background: linear-gradient(45deg, #667eea, #764ba2, #f093fb, #667eea);
+    background-size: 400% 400%;
+    animation: gradientShift 3s ease infinite;
+  }
+}
+
+/* ========================================
+   USAGE EXAMPLES
+   ======================================== */
+
+/*
+  Basic Usage:
+  <div class="gradient-primary">Primary Gradient</div>
+  <div class="gradient-rainbow">Rainbow Gradient</div>
+  
+  Text Gradients:
+  <h1 class="gradient-text">Gradient Text</h1>
+  
+  Gradient Borders:
+  <div class="gradient-border">Content with gradient border</div>
+  
+  Gradient Buttons:
+  <button class="btn-gradient">Gradient Button</button>
+  
+  Gradient Cards:
+  <div class="card-gradient">Gradient Card</div>
+  
+  Animated Gradients:
+  <div class="gradient-animated">Animated Gradient</div>
+  
+  Glass Effect:
+  <div class="gradient-glass">Glass Effect</div>
+*/
