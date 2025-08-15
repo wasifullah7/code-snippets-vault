@@ -1,0 +1,473 @@
+/* ========================================
+   CSS SHADOWS LIBRARY
+   Professional shadow utilities for modern web development
+   ======================================== */
+
+/* ========================================
+   BASIC SHADOWS
+   ======================================== */
+
+.shadow-none {
+  box-shadow: none;
+}
+
+.shadow-sm {
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.shadow {
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+.shadow-md {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.shadow-lg {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.shadow-xl {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.shadow-2xl {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+/* ========================================
+   COLORED SHADOWS
+   ======================================== */
+
+.shadow-red {
+  box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.2), 0 2px 4px -1px rgba(239, 68, 68, 0.1);
+}
+
+.shadow-orange {
+  box-shadow: 0 4px 6px -1px rgba(249, 115, 22, 0.2), 0 2px 4px -1px rgba(249, 115, 22, 0.1);
+}
+
+.shadow-yellow {
+  box-shadow: 0 4px 6px -1px rgba(245, 158, 11, 0.2), 0 2px 4px -1px rgba(245, 158, 11, 0.1);
+}
+
+.shadow-green {
+  box-shadow: 0 4px 6px -1px rgba(34, 197, 94, 0.2), 0 2px 4px -1px rgba(34, 197, 94, 0.1);
+}
+
+.shadow-blue {
+  box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.2), 0 2px 4px -1px rgba(59, 130, 246, 0.1);
+}
+
+.shadow-indigo {
+  box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.2), 0 2px 4px -1px rgba(99, 102, 241, 0.1);
+}
+
+.shadow-purple {
+  box-shadow: 0 4px 6px -1px rgba(168, 85, 247, 0.2), 0 2px 4px -1px rgba(168, 85, 247, 0.1);
+}
+
+.shadow-pink {
+  box-shadow: 0 4px 6px -1px rgba(236, 72, 153, 0.2), 0 2px 4px -1px rgba(236, 72, 153, 0.1);
+}
+
+/* ========================================
+   DIRECTIONAL SHADOWS
+   ======================================== */
+
+.shadow-top {
+  box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1), 0 -2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.shadow-bottom {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.shadow-left {
+  box-shadow: -4px 0 6px -1px rgba(0, 0, 0, 0.1), -2px 0 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.shadow-right {
+  box-shadow: 4px 0 6px -1px rgba(0, 0, 0, 0.1), 2px 0 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.shadow-top-left {
+  box-shadow: -4px -4px 6px -1px rgba(0, 0, 0, 0.1), -2px -2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.shadow-top-right {
+  box-shadow: 4px -4px 6px -1px rgba(0, 0, 0, 0.1), 2px -2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.shadow-bottom-left {
+  box-shadow: -4px 4px 6px -1px rgba(0, 0, 0, 0.1), -2px 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.shadow-bottom-right {
+  box-shadow: 4px 4px 6px -1px rgba(0, 0, 0, 0.1), 2px 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* ========================================
+   INNER SHADOWS
+   ======================================== */
+
+.shadow-inner {
+  box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+}
+
+.shadow-inner-sm {
+  box-shadow: inset 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.shadow-inner-md {
+  box-shadow: inset 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.shadow-inner-lg {
+  box-shadow: inset 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+/* ========================================
+   GLOW EFFECTS
+   ======================================== */
+
+.glow {
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+}
+
+.glow-sm {
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.glow-lg {
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.15);
+}
+
+.glow-red {
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
+}
+
+.glow-green {
+  box-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
+}
+
+.glow-blue {
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+}
+
+.glow-purple {
+  box-shadow: 0 0 20px rgba(168, 85, 247, 0.3);
+}
+
+.glow-yellow {
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
+}
+
+/* ========================================
+   NEUMORPHISM SHADOWS
+   ======================================== */
+
+.neu-light {
+  box-shadow: 
+    8px 8px 16px rgba(0, 0, 0, 0.1),
+    -8px -8px 16px rgba(255, 255, 255, 0.8);
+}
+
+.neu-dark {
+  box-shadow: 
+    8px 8px 16px rgba(0, 0, 0, 0.3),
+    -8px -8px 16px rgba(255, 255, 255, 0.05);
+}
+
+.neu-inset {
+  box-shadow: 
+    inset 8px 8px 16px rgba(0, 0, 0, 0.1),
+    inset -8px -8px 16px rgba(255, 255, 255, 0.8);
+}
+
+.neu-inset-dark {
+  box-shadow: 
+    inset 8px 8px 16px rgba(0, 0, 0, 0.3),
+    inset -8px -8px 16px rgba(255, 255, 255, 0.05);
+}
+
+/* ========================================
+   MATERIAL DESIGN SHADOWS
+   ======================================== */
+
+.material-1 {
+  box-shadow: 0 2px 1px -1px rgba(0, 0, 0, 0.2), 0 1px 1px 0 rgba(0, 0, 0, 0.14), 0 1px 3px 0 rgba(0, 0, 0, 0.12);
+}
+
+.material-2 {
+  box-shadow: 0 3px 1px -2px rgba(0, 0, 0, 0.2), 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12);
+}
+
+.material-3 {
+  box-shadow: 0 3px 3px -2px rgba(0, 0, 0, 0.2), 0 3px 4px 0 rgba(0, 0, 0, 0.14), 0 1px 8px 0 rgba(0, 0, 0, 0.12);
+}
+
+.material-4 {
+  box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.2), 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12);
+}
+
+.material-6 {
+  box-shadow: 0 3px 5px -1px rgba(0, 0, 0, 0.2), 0 6px 10px 0 rgba(0, 0, 0, 0.14), 0 1px 18px 0 rgba(0, 0, 0, 0.12);
+}
+
+.material-8 {
+  box-shadow: 0 5px 5px -3px rgba(0, 0, 0, 0.2), 0 8px 10px 1px rgba(0, 0, 0, 0.14), 0 3px 14px 2px rgba(0, 0, 0, 0.12);
+}
+
+.material-12 {
+  box-shadow: 0 7px 8px -4px rgba(0, 0, 0, 0.2), 0 12px 17px 2px rgba(0, 0, 0, 0.14), 0 5px 22px 4px rgba(0, 0, 0, 0.12);
+}
+
+.material-16 {
+  box-shadow: 0 8px 10px 1px rgba(0, 0, 0, 0.2), 0 16px 24px 2px rgba(0, 0, 0, 0.14), 0 6px 30px 5px rgba(0, 0, 0, 0.12);
+}
+
+.material-24 {
+  box-shadow: 0 11px 15px -7px rgba(0, 0, 0, 0.2), 0 24px 38px 3px rgba(0, 0, 0, 0.14), 0 9px 46px 8px rgba(0, 0, 0, 0.12);
+}
+
+/* ========================================
+   ANIMATED SHADOWS
+   ======================================== */
+
+.shadow-hover {
+  transition: box-shadow 0.3s ease;
+}
+
+.shadow-hover:hover {
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.shadow-hover-lg:hover {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.shadow-hover-xl:hover {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.glow-hover {
+  transition: box-shadow 0.3s ease;
+}
+
+.glow-hover:hover {
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.2);
+}
+
+.glow-hover-blue:hover {
+  box-shadow: 0 0 30px rgba(59, 130, 246, 0.4);
+}
+
+.glow-hover-green:hover {
+  box-shadow: 0 0 30px rgba(34, 197, 94, 0.4);
+}
+
+.glow-hover-red:hover {
+  box-shadow: 0 0 30px rgba(239, 68, 68, 0.4);
+}
+
+/* ========================================
+   FOCUS SHADOWS
+   ======================================== */
+
+.shadow-focus {
+  transition: box-shadow 0.2s ease;
+}
+
+.shadow-focus:focus {
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+  outline: none;
+}
+
+.shadow-focus-red:focus {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.3);
+  outline: none;
+}
+
+.shadow-focus-green:focus {
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.3);
+  outline: none;
+}
+
+.shadow-focus-yellow:focus {
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.3);
+  outline: none;
+}
+
+/* ========================================
+   TEXT SHADOWS
+   ======================================== */
+
+.text-shadow {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.text-shadow-sm {
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+}
+
+.text-shadow-md {
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.text-shadow-lg {
+  text-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.text-shadow-xl {
+  text-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.text-shadow-none {
+  text-shadow: none;
+}
+
+/* Colored text shadows */
+.text-shadow-red {
+  text-shadow: 0 1px 2px rgba(239, 68, 68, 0.3);
+}
+
+.text-shadow-blue {
+  text-shadow: 0 1px 2px rgba(59, 130, 246, 0.3);
+}
+
+.text-shadow-green {
+  text-shadow: 0 1px 2px rgba(34, 197, 94, 0.3);
+}
+
+.text-shadow-yellow {
+  text-shadow: 0 1px 2px rgba(245, 158, 11, 0.3);
+}
+
+.text-shadow-purple {
+  text-shadow: 0 1px 2px rgba(168, 85, 247, 0.3);
+}
+
+/* ========================================
+   FILTER SHADOWS
+   ======================================== */
+
+.filter-shadow {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+}
+
+.filter-shadow-sm {
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.1));
+}
+
+.filter-shadow-md {
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+}
+
+.filter-shadow-lg {
+  filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.1));
+}
+
+.filter-shadow-xl {
+  filter: drop-shadow(0 20px 25px rgba(0, 0, 0, 0.15));
+}
+
+/* ========================================
+   RESPONSIVE SHADOWS
+   ======================================== */
+
+@media (max-width: 768px) {
+  .shadow-responsive {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .shadow-responsive-lg {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+}
+
+@media (min-width: 769px) {
+  .shadow-responsive {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  }
+  
+  .shadow-responsive-lg {
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+}
+
+/* ========================================
+   UTILITY CLASSES
+   ======================================== */
+
+.shadow-transition {
+  transition: box-shadow 0.3s ease;
+}
+
+.shadow-transition-fast {
+  transition: box-shadow 0.15s ease;
+}
+
+.shadow-transition-slow {
+  transition: box-shadow 0.5s ease;
+}
+
+.shadow-ease-in {
+  transition: box-shadow 0.3s cubic-bezier(0.4, 0, 1, 1);
+}
+
+.shadow-ease-out {
+  transition: box-shadow 0.3s cubic-bezier(0, 0, 0.2, 1);
+}
+
+.shadow-ease-in-out {
+  transition: box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ========================================
+   USAGE EXAMPLES
+   ======================================== */
+
+/*
+  Basic Usage:
+  <div class="shadow">Basic shadow</div>
+  <div class="shadow-lg">Large shadow</div>
+  
+  Colored Shadows:
+  <div class="shadow-blue">Blue shadow</div>
+  <div class="shadow-red">Red shadow</div>
+  
+  Directional Shadows:
+  <div class="shadow-top">Top shadow</div>
+  <div class="shadow-bottom">Bottom shadow</div>
+  
+  Glow Effects:
+  <div class="glow">Glow effect</div>
+  <div class="glow-blue">Blue glow</div>
+  
+  Neumorphism:
+  <div class="neu-light">Light neumorphism</div>
+  <div class="neu-dark">Dark neumorphism</div>
+  
+  Material Design:
+  <div class="material-4">Material shadow</div>
+  <div class="material-8">Material shadow</div>
+  
+  Hover Effects:
+  <div class="shadow-hover">Hover shadow</div>
+  <div class="glow-hover">Hover glow</div>
+  
+  Focus States:
+  <button class="shadow-focus">Focus shadow</button>
+  <input class="shadow-focus-red" type="text">
+  
+  Text Shadows:
+  <h1 class="text-shadow">Text with shadow</h1>
+  <h2 class="text-shadow-blue">Blue text shadow</h2>
+  
+  Filter Shadows:
+  <img class="filter-shadow" src="image.png" alt="Image with shadow">
+  
+  Responsive:
+  <div class="shadow-responsive">Responsive shadow</div>
+*/
