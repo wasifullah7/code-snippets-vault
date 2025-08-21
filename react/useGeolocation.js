@@ -2,9 +2,9 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 
 /**
  * Custom React hook for geolocation functionality
- * Provides real-time location tracking and geolocation utilities
- * @param {Object} options - Geolocation options
- * @returns {Object} Geolocation state and methods
+ * Provides real-time location tracking, geocoding, and location utilities
+ * @param {Object} options - Hook options
+ * @returns {Object} Geolocation state and utilities
  */
 function useGeolocation(options = {}) {
   const {
@@ -18,210 +18,154 @@ function useGeolocation(options = {}) {
 
   const [position, setPosition] = useState(null);
   const [error, setError] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [accuracy, setAccuracy] = useState(null);
-  const [timestamp, setTimestamp] = useState(null);
-  const [heading, setHeading] = useState(null);
-  const [speed, setSpeed] = useState(null);
-  const [altitude, setAltitude] = useState(null);
-  const [altitudeAccuracy, setAltitudeAccuracy] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [watchId, setWatchId] = useState(null);
+  const [lastUpdated, setLastUpdated] = useState(null);
 
-  const watchIdRef = useRef(null);
-  const isSupportedRef = useRef('geolocation' in navigator);
+  const positionRef = useRef(null);
+  const errorRef = useRef(null);
+
+  // Success callback
+  const handleSuccess = useCallback((pos) => {
+    const newPosition = {
+      latitude: pos.coords.latitude,
+      longitude: pos.coords.longitude,
+      accuracy: pos.coords.accuracy,
+      altitude: pos.coords.altitude,
+      altitudeAccuracy: pos.coords.altitudeAccuracy,
+      heading: pos.coords.heading,
+      speed: pos.coords.speed,
+      timestamp: pos.timestamp
+    };
+
+    setPosition(newPosition);
+    setError(null);
+    setLoading(false);
+    setLastUpdated(new Date());
+    positionRef.current = newPosition;
+
+    if (onSuccess) {
+      onSuccess(newPosition);
+    }
+  }, [onSuccess]);
+
+  // Error callback
+  const handleError = useCallback((err) => {
+    const errorInfo = {
+      code: err.code,
+      message: err.message,
+      timestamp: Date.now()
+    };
+
+    setError(errorInfo);
+    setLoading(false);
+    errorRef.current = errorInfo;
+
+    if (onError) {
+      onError(errorInfo);
+    }
+  }, [onError]);
 
   // Get current position
   const getCurrentPosition = useCallback(() => {
-    if (!isSupportedRef.current) {
-      setError(new Error('Geolocation is not supported by this browser'));
+    if (!navigator.geolocation) {
+      handleError({
+        code: 2,
+        message: 'Geolocation is not supported by this browser'
+      });
       return;
     }
 
-    setIsLoading(true);
+    setLoading(true);
     setError(null);
 
-    const successCallback = (pos) => {
-      const { coords, timestamp: posTimestamp } = pos;
-      
-      setPosition({
-        latitude: coords.latitude,
-        longitude: coords.longitude
-      });
-      setAccuracy(coords.accuracy);
-      setTimestamp(posTimestamp);
-      setHeading(coords.heading);
-      setSpeed(coords.speed);
-      setAltitude(coords.altitude);
-      setAltitudeAccuracy(coords.altitudeAccuracy);
-      setIsLoading(false);
-
-      if (onSuccess) {
-        onSuccess(pos);
-      }
-    };
-
-    const errorCallback = (err) => {
-      let errorMessage = 'Unknown geolocation error';
-      
-      switch (err.code) {
-        case err.PERMISSION_DENIED:
-          errorMessage = 'Geolocation permission denied';
-          break;
-        case err.POSITION_UNAVAILABLE:
-          errorMessage = 'Location information unavailable';
-          break;
-        case err.TIMEOUT:
-          errorMessage = 'Geolocation request timed out';
-          break;
-      }
-
-      const geolocationError = new Error(errorMessage);
-      setError(geolocationError);
-      setIsLoading(false);
-
-      if (onError) {
-        onError(geolocationError);
-      }
-    };
-
     navigator.geolocation.getCurrentPosition(
-      successCallback,
-      errorCallback,
+      handleSuccess,
+      handleError,
       {
         enableHighAccuracy,
         timeout,
         maximumAge
       }
     );
-  }, [enableHighAccuracy, timeout, maximumAge, onSuccess, onError]);
+  }, [enableHighAccuracy, timeout, maximumAge, handleSuccess, handleError]);
 
   // Start watching position
   const startWatching = useCallback(() => {
-    if (!isSupportedRef.current) {
-      setError(new Error('Geolocation is not supported by this browser'));
+    if (!navigator.geolocation) {
+      handleError({
+        code: 2,
+        message: 'Geolocation is not supported by this browser'
+      });
       return;
     }
 
-    if (watchIdRef.current) {
-      return; // Already watching
+    if (watchId) {
+      navigator.geolocation.clearWatch(watchId);
     }
 
-    setIsLoading(true);
+    setLoading(true);
     setError(null);
 
-    const successCallback = (pos) => {
-      const { coords, timestamp: posTimestamp } = pos;
-      
-      setPosition({
-        latitude: coords.latitude,
-        longitude: coords.longitude
-      });
-      setAccuracy(coords.accuracy);
-      setTimestamp(posTimestamp);
-      setHeading(coords.heading);
-      setSpeed(coords.speed);
-      setAltitude(coords.altitude);
-      setAltitudeAccuracy(coords.altitudeAccuracy);
-      setIsLoading(false);
-
-      if (onSuccess) {
-        onSuccess(pos);
-      }
-    };
-
-    const errorCallback = (err) => {
-      let errorMessage = 'Unknown geolocation error';
-      
-      switch (err.code) {
-        case err.PERMISSION_DENIED:
-          errorMessage = 'Geolocation permission denied';
-          break;
-        case err.POSITION_UNAVAILABLE:
-          errorMessage = 'Location information unavailable';
-          break;
-        case err.TIMEOUT:
-          errorMessage = 'Geolocation request timed out';
-          break;
-      }
-
-      const geolocationError = new Error(errorMessage);
-      setError(geolocationError);
-      setIsLoading(false);
-
-      if (onError) {
-        onError(geolocationError);
-      }
-    };
-
-    watchIdRef.current = navigator.geolocation.watchPosition(
-      successCallback,
-      errorCallback,
+    const id = navigator.geolocation.watchPosition(
+      handleSuccess,
+      handleError,
       {
         enableHighAccuracy,
         timeout,
         maximumAge
       }
     );
-  }, [enableHighAccuracy, timeout, maximumAge, onSuccess, onError]);
+
+    setWatchId(id);
+  }, [enableHighAccuracy, timeout, maximumAge, handleSuccess, handleError, watchId]);
 
   // Stop watching position
   const stopWatching = useCallback(() => {
-    if (watchIdRef.current) {
-      navigator.geolocation.clearWatch(watchIdRef.current);
-      watchIdRef.current = null;
+    if (watchId) {
+      navigator.geolocation.clearWatch(watchId);
+      setWatchId(null);
     }
-  }, []);
+  }, [watchId]);
 
-  // Clear position data
-  const clearPosition = useCallback(() => {
-    setPosition(null);
-    setError(null);
-    setAccuracy(null);
-    setTimestamp(null);
-    setHeading(null);
-    setSpeed(null);
-    setAltitude(null);
-    setAltitudeAccuracy(null);
-  }, []);
-
-  // Calculate distance between two coordinates
+  // Calculate distance between two points
   const calculateDistance = useCallback((lat1, lon1, lat2, lon2) => {
     const R = 6371; // Earth's radius in kilometers
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = 
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon / 2) * Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
   }, []);
 
-  // Get distance from current position to target
-  const getDistanceTo = useCallback((targetLat, targetLon) => {
-    if (!position) {
-      return null;
-    }
-    return calculateDistance(position.latitude, position.longitude, targetLat, targetLon);
+  // Calculate bearing between two points
+  const calculateBearing = useCallback((lat1, lon1, lat2, lon2) => {
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const lat1Rad = lat1 * Math.PI / 180;
+    const lat2Rad = lat2 * Math.PI / 180;
+    
+    const y = Math.sin(dLon) * Math.cos(lat2Rad);
+    const x = Math.cos(lat1Rad) * Math.sin(lat2Rad) -
+              Math.sin(lat1Rad) * Math.cos(lat2Rad) * Math.cos(dLon);
+    
+    return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+  }, []);
+
+  // Check if position is within radius
+  const isWithinRadius = useCallback((targetLat, targetLon, radiusKm) => {
+    if (!position) return false;
+    
+    const distance = calculateDistance(
+      position.latitude,
+      position.longitude,
+      targetLat,
+      targetLon
+    );
+    
+    return distance <= radiusKm;
   }, [position, calculateDistance]);
-
-  // Get bearing to target
-  const getBearingTo = useCallback((targetLat, targetLon) => {
-    if (!position) {
-      return null;
-    }
-
-    const lat1 = position.latitude * Math.PI / 180;
-    const lat2 = targetLat * Math.PI / 180;
-    const dLon = (targetLon - position.longitude) * Math.PI / 180;
-
-    const y = Math.sin(dLon) * Math.cos(lat2);
-    const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
-    
-    let bearing = Math.atan2(y, x) * 180 / Math.PI;
-    bearing = (bearing + 360) % 360;
-    
-    return bearing;
-  }, [position]);
 
   // Get formatted address from coordinates
   const getAddressFromCoords = useCallback(async (lat, lon) => {
@@ -229,40 +173,42 @@ function useGeolocation(options = {}) {
       const response = await fetch(
         `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`
       );
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch address');
+      }
+      
       const data = await response.json();
-      return data.display_name;
+      return data;
     } catch (error) {
-      console.error('Error getting address:', error);
-      return null;
+      throw new Error(`Geocoding error: ${error.message}`);
     }
   }, []);
-
-  // Get current address
-  const getCurrentAddress = useCallback(async () => {
-    if (!position) {
-      return null;
-    }
-    return getAddressFromCoords(position.latitude, position.longitude);
-  }, [position, getAddressFromCoords]);
 
   // Get coordinates from address
   const getCoordsFromAddress = useCallback(async (address) => {
     try {
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`
       );
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch coordinates');
+      }
+      
       const data = await response.json();
       
-      if (data.length > 0) {
-        return {
-          latitude: parseFloat(data[0].lat),
-          longitude: parseFloat(data[0].lon)
-        };
+      if (data.length === 0) {
+        throw new Error('Address not found');
       }
-      return null;
+      
+      return {
+        latitude: parseFloat(data[0].lat),
+        longitude: parseFloat(data[0].lon),
+        displayName: data[0].display_name
+      };
     } catch (error) {
-      console.error('Error getting coordinates:', error);
-      return null;
+      throw new Error(`Reverse geocoding error: ${error.message}`);
     }
   }, []);
 
@@ -275,36 +221,39 @@ function useGeolocation(options = {}) {
     }
 
     return () => {
-      if (watchIdRef.current) {
+      if (watchId) {
         stopWatching();
       }
     };
-  }, [watchPosition, startWatching, getCurrentPosition, stopWatching]);
+  }, [watchPosition, startWatching, getCurrentPosition, stopWatching, watchId]);
 
   return {
     // State
     position,
     error,
-    isLoading,
-    accuracy,
-    timestamp,
-    heading,
-    speed,
-    altitude,
-    altitudeAccuracy,
-    isSupported: isSupportedRef.current,
+    loading,
+    lastUpdated,
+    isWatching: !!watchId,
     
-    // Methods
+    // Actions
     getCurrentPosition,
     startWatching,
     stopWatching,
-    clearPosition,
+    
+    // Utilities
     calculateDistance,
-    getDistanceTo,
-    getBearingTo,
+    calculateBearing,
+    isWithinRadius,
     getAddressFromCoords,
-    getCurrentAddress,
-    getCoordsFromAddress
+    getCoordsFromAddress,
+    
+    // Computed values
+    hasPosition: !!position,
+    hasError: !!error,
+    accuracy: position?.accuracy || null,
+    speed: position?.speed || null,
+    heading: position?.heading || null,
+    altitude: position?.altitude || null
   };
 }
 
@@ -316,232 +265,292 @@ function useGeolocation(options = {}) {
 function useLocationFeatures(options = {}) {
   const {
     targetLocation = null,
-    updateInterval = 5000,
+    radiusKm = 1,
+    checkInterval = 30000, // 30 seconds
     ...geolocationOptions
   } = options;
+
+  const geolocation = useGeolocation({
+    watchPosition: true,
+    ...geolocationOptions
+  });
 
   const [isNearTarget, setIsNearTarget] = useState(false);
   const [distanceToTarget, setDistanceToTarget] = useState(null);
   const [bearingToTarget, setBearingToTarget] = useState(null);
-  const [locationHistory, setLocationHistory] = useState([]);
-  const [averageSpeed, setAverageSpeed] = useState(null);
 
-  const geolocation = useGeolocation({
-    ...geolocationOptions,
-    watchPosition: true
-  });
-
-  // Update location history
+  // Check proximity to target
   useEffect(() => {
-    if (geolocation.position) {
-      setLocationHistory(prev => [...prev.slice(-49), {
-        ...geolocation.position,
-        timestamp: geolocation.timestamp,
-        accuracy: geolocation.accuracy
-      }]);
-    }
-  }, [geolocation.position, geolocation.timestamp, geolocation.accuracy]);
+    if (!targetLocation || !geolocation.position) return;
 
-  // Calculate average speed
-  useEffect(() => {
-    if (locationHistory.length >= 2) {
-      const recentPositions = locationHistory.slice(-10);
-      let totalDistance = 0;
-      let totalTime = 0;
-
-      for (let i = 1; i < recentPositions.length; i++) {
-        const prev = recentPositions[i - 1];
-        const curr = recentPositions[i];
-        
-        const distance = geolocation.calculateDistance(
-          prev.latitude, prev.longitude,
-          curr.latitude, curr.longitude
-        );
-        
-        const time = (curr.timestamp - prev.timestamp) / 1000 / 3600; // hours
-        
-        totalDistance += distance;
-        totalTime += time;
-      }
-
-      if (totalTime > 0) {
-        setAverageSpeed(totalDistance / totalTime); // km/h
-      }
-    }
-  }, [locationHistory, geolocation.calculateDistance]);
-
-  // Check if near target
-  useEffect(() => {
-    if (targetLocation && geolocation.position) {
-      const distance = geolocation.getDistanceTo(targetLocation.latitude, targetLocation.longitude);
-      setDistanceToTarget(distance);
-      setIsNearTarget(distance <= (targetLocation.radius || 0.1)); // Default 100m radius
-      
-      const bearing = geolocation.getBearingTo(targetLocation.latitude, targetLocation.longitude);
-      setBearingToTarget(bearing);
-    }
-  }, [targetLocation, geolocation.position, geolocation.getDistanceTo, geolocation.getBearingTo]);
-
-  // Get movement direction
-  const getMovementDirection = useCallback(() => {
-    if (locationHistory.length < 2) {
-      return null;
-    }
-
-    const recent = locationHistory.slice(-2);
-    const bearing = geolocation.getBearingTo(
-      recent[1].latitude,
-      recent[1].longitude
+    const distance = geolocation.calculateDistance(
+      geolocation.position.latitude,
+      geolocation.position.longitude,
+      targetLocation.latitude,
+      targetLocation.longitude
     );
 
-    if (bearing >= 315 || bearing < 45) return 'N';
-    if (bearing >= 45 && bearing < 135) return 'E';
-    if (bearing >= 135 && bearing < 225) return 'S';
-    if (bearing >= 225 && bearing < 315) return 'W';
-    
-    return null;
-  }, [locationHistory, geolocation.getBearingTo]);
+    const bearing = geolocation.calculateBearing(
+      geolocation.position.latitude,
+      geolocation.position.longitude,
+      targetLocation.latitude,
+      targetLocation.longitude
+    );
 
-  // Get total distance traveled
-  const getTotalDistance = useCallback(() => {
-    if (locationHistory.length < 2) {
-      return 0;
-    }
-
-    let totalDistance = 0;
-    for (let i = 1; i < locationHistory.length; i++) {
-      const prev = locationHistory[i - 1];
-      const curr = locationHistory[i];
-      
-      totalDistance += geolocation.calculateDistance(
-        prev.latitude, prev.longitude,
-        curr.latitude, curr.longitude
-      );
-    }
-
-    return totalDistance;
-  }, [locationHistory, geolocation.calculateDistance]);
-
-  // Get estimated time of arrival
-  const getETA = useCallback((targetLat, targetLon, speed = averageSpeed) => {
-    if (!geolocation.position || !speed || speed <= 0) {
-      return null;
-    }
-
-    const distance = geolocation.getDistanceTo(targetLat, targetLon);
-    if (!distance) {
-      return null;
-    }
-
-    const timeHours = distance / speed;
-    const timeMinutes = timeHours * 60;
-    
-    return {
-      hours: Math.floor(timeHours),
-      minutes: Math.floor(timeMinutes % 60),
-      totalMinutes: Math.floor(timeMinutes)
-    };
-  }, [geolocation.position, geolocation.getDistanceTo, averageSpeed]);
+    setDistanceToTarget(distance);
+    setBearingToTarget(bearing);
+    setIsNearTarget(distance <= radiusKm);
+  }, [geolocation.position, targetLocation, radiusKm, geolocation.calculateDistance, geolocation.calculateBearing]);
 
   return {
     ...geolocation,
     isNearTarget,
     distanceToTarget,
     bearingToTarget,
-    locationHistory,
-    averageSpeed,
-    getMovementDirection,
-    getTotalDistance,
-    getETA
+    targetLocation
   };
 }
 
 /**
- * Hook for geofencing functionality
- * @param {Array} geofences - Array of geofence objects
+ * Hook for location history tracking
  * @param {Object} options - Hook options
- * @returns {Object} Geofencing state and methods
+ * @returns {Object} Location history utilities
  */
-function useGeofencing(geofences = [], options = {}) {
+function useLocationHistory(options = {}) {
   const {
-    checkInterval = 1000,
-    onEnter = null,
-    onExit = null,
+    maxHistorySize = 100,
+    saveToStorage = false,
+    storageKey = 'location_history',
     ...geolocationOptions
   } = options;
 
-  const [activeGeofences, setActiveGeofences] = useState([]);
-  const [geofenceEvents, setGeofenceEvents] = useState([]);
-
   const geolocation = useGeolocation({
-    ...geolocationOptions,
-    watchPosition: true
+    watchPosition: true,
+    ...geolocationOptions
   });
 
-  // Check geofences
+  const [history, setHistory] = useState([]);
+  const [totalDistance, setTotalDistance] = useState(0);
+
+  // Load history from storage
   useEffect(() => {
-    if (!geolocation.position || geofences.length === 0) {
+    if (saveToStorage) {
+      try {
+        const saved = localStorage.getItem(storageKey);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          setHistory(parsed.history || []);
+          setTotalDistance(parsed.totalDistance || 0);
+        }
+      } catch (error) {
+        console.error('Failed to load location history:', error);
+      }
+    }
+  }, [saveToStorage, storageKey]);
+
+  // Save history to storage
+  useEffect(() => {
+    if (saveToStorage && history.length > 0) {
+      try {
+        localStorage.setItem(storageKey, JSON.stringify({
+          history,
+          totalDistance,
+          lastUpdated: Date.now()
+        }));
+      } catch (error) {
+        console.error('Failed to save location history:', error);
+      }
+    }
+  }, [history, totalDistance, saveToStorage, storageKey]);
+
+  // Add position to history
+  useEffect(() => {
+    if (!geolocation.position) return;
+
+    setHistory(prev => {
+      const newHistory = [...prev, {
+        ...geolocation.position,
+        timestamp: Date.now()
+      }];
+
+      // Limit history size
+      if (newHistory.length > maxHistorySize) {
+        newHistory.splice(0, newHistory.length - maxHistorySize);
+      }
+
+      return newHistory;
+    });
+  }, [geolocation.position, maxHistorySize]);
+
+  // Calculate total distance
+  useEffect(() => {
+    if (history.length < 2) {
+      setTotalDistance(0);
       return;
     }
 
-    const interval = setInterval(() => {
-      const currentPosition = geolocation.position;
-      const newActiveGeofences = [];
+    let total = 0;
+    for (let i = 1; i < history.length; i++) {
+      const prev = history[i - 1];
+      const curr = history[i];
+      
+      total += geolocation.calculateDistance(
+        prev.latitude,
+        prev.longitude,
+        curr.latitude,
+        curr.longitude
+      );
+    }
 
-      geofences.forEach(geofence => {
-        const distance = geolocation.getDistanceTo(geofence.latitude, geofence.longitude);
-        const isInside = distance <= geofence.radius;
+    setTotalDistance(total);
+  }, [history, geolocation.calculateDistance]);
 
-        if (isInside) {
-          newActiveGeofences.push(geofence);
-        }
+  // Clear history
+  const clearHistory = useCallback(() => {
+    setHistory([]);
+    setTotalDistance(0);
+    
+    if (saveToStorage) {
+      localStorage.removeItem(storageKey);
+    }
+  }, [saveToStorage, storageKey]);
 
-        // Check if entering or exiting
-        const wasInside = activeGeofences.some(g => g.id === geofence.id);
-        
-        if (isInside && !wasInside) {
-          // Entering geofence
-          const event = {
-            type: 'enter',
-            geofence,
-            timestamp: Date.now(),
-            position: currentPosition
-          };
-          
-          setGeofenceEvents(prev => [...prev, event]);
-          if (onEnter) onEnter(event);
-        } else if (!isInside && wasInside) {
-          // Exiting geofence
-          const event = {
-            type: 'exit',
-            geofence,
-            timestamp: Date.now(),
-            position: currentPosition
-          };
-          
-          setGeofenceEvents(prev => [...prev, event]);
-          if (onExit) onExit(event);
-        }
-      });
+  // Get history statistics
+  const getHistoryStats = useCallback(() => {
+    if (history.length === 0) {
+      return {
+        totalPoints: 0,
+        totalDistance: 0,
+        averageSpeed: 0,
+        duration: 0,
+        startTime: null,
+        endTime: null
+      };
+    }
 
-      setActiveGeofences(newActiveGeofences);
-    }, checkInterval);
+    const startTime = history[0].timestamp;
+    const endTime = history[history.length - 1].timestamp;
+    const duration = (endTime - startTime) / 1000 / 60; // minutes
 
-    return () => clearInterval(interval);
-  }, [geolocation.position, geofences, activeGeofences, geolocation.getDistanceTo, checkInterval, onEnter, onExit]);
+    const speeds = history
+      .filter(pos => pos.speed !== null && pos.speed !== undefined)
+      .map(pos => pos.speed);
+
+    const averageSpeed = speeds.length > 0 
+      ? speeds.reduce((sum, speed) => sum + speed, 0) / speeds.length
+      : 0;
+
+    return {
+      totalPoints: history.length,
+      totalDistance,
+      averageSpeed,
+      duration,
+      startTime: new Date(startTime),
+      endTime: new Date(endTime)
+    };
+  }, [history, totalDistance]);
 
   return {
     ...geolocation,
-    activeGeofences,
-    geofenceEvents,
-    clearEvents: () => setGeofenceEvents([])
+    history,
+    totalDistance,
+    clearHistory,
+    getHistoryStats
+  };
+}
+
+/**
+ * Hook for location-based notifications
+ * @param {Object} options - Hook options
+ * @returns {Object} Location notification utilities
+ */
+function useLocationNotifications(options = {}) {
+  const {
+    notifications = [],
+    checkInterval = 10000, // 10 seconds
+    ...geolocationOptions
+  } = options;
+
+  const geolocation = useGeolocation({
+    watchPosition: true,
+    ...geolocationOptions
+  });
+
+  const [triggeredNotifications, setTriggeredNotifications] = useState(new Set());
+  const [lastCheck, setLastCheck] = useState(null);
+
+  // Check notifications
+  useEffect(() => {
+    if (!geolocation.position || notifications.length === 0) return;
+
+    const now = Date.now();
+    if (lastCheck && now - lastCheck < checkInterval) return;
+
+    setLastCheck(now);
+
+    notifications.forEach(notification => {
+      if (triggeredNotifications.has(notification.id)) return;
+
+      const isNearby = geolocation.isWithinRadius(
+        notification.latitude,
+        notification.longitude,
+        notification.radiusKm || 1
+      );
+
+      if (isNearby) {
+        setTriggeredNotifications(prev => new Set([...prev, notification.id]));
+        
+        if (notification.onTrigger) {
+          notification.onTrigger({
+            ...notification,
+            currentPosition: geolocation.position,
+            distance: geolocation.calculateDistance(
+              geolocation.position.latitude,
+              geolocation.position.longitude,
+              notification.latitude,
+              notification.longitude
+            )
+          });
+        }
+      }
+    });
+  }, [
+    geolocation.position,
+    notifications,
+    triggeredNotifications,
+    lastCheck,
+    checkInterval,
+    geolocation.isWithinRadius,
+    geolocation.calculateDistance
+  ]);
+
+  // Reset triggered notifications
+  const resetNotifications = useCallback(() => {
+    setTriggeredNotifications(new Set());
+  }, []);
+
+  // Clear specific notification
+  const clearNotification = useCallback((notificationId) => {
+    setTriggeredNotifications(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(notificationId);
+      return newSet;
+    });
+  }, []);
+
+  return {
+    ...geolocation,
+    triggeredNotifications: Array.from(triggeredNotifications),
+    resetNotifications,
+    clearNotification
   };
 }
 
 export {
   useGeolocation,
   useLocationFeatures,
-  useGeofencing
+  useLocationHistory,
+  useLocationNotifications
 };
 
 export default useGeolocation;
