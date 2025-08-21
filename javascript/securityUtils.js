@@ -37,7 +37,7 @@ class PasswordStrengthAnalyzer {
       hasUppercase: /[A-Z]/.test(password),
       hasLowercase: /[a-z]/.test(password),
       hasNumbers: /\d/.test(password),
-      hasSpecialChars: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password),
+      hasSpecialChars: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>?]/.test(password),
       hasRepeatingChars: /(.)\1{2,}/.test(password),
       hasSequentialChars: /(abc|bcd|cde|def|efg|fgh|ghi|hij|ijk|jkl|klm|lmn|mno|nop|opq|pqr|qrs|rst|stu|tuv|uvw|vwx|wxy|xyz|123|234|345|456|567|678|789|012)/i.test(password),
       hasCommonPatterns: /(password|123456|qwerty|admin|letmein|welcome|monkey|dragon|master|football)/i.test(password)
@@ -109,110 +109,121 @@ class PasswordStrengthAnalyzer {
     }
 
     return {
-      score: Math.max(0, Math.min(score, 20)),
+      score: Math.max(0, score),
       strength,
-      feedback: feedback.length > 0 ? feedback : ['Password meets basic requirements'],
+      feedback,
       suggestions,
       analysis
     };
   }
 
   /**
-   * Generate strong password
-   * @param {Object} options - Password generation options
+   * Check if password meets minimum requirements
+   * @param {string} password - Password to check
+   * @returns {boolean} Whether password meets requirements
+   */
+  meetsRequirements(password) {
+    const analysis = this.analyze(password);
+    return analysis.score >= 8 && analysis.feedback.length === 0;
+  }
+
+  /**
+   * Generate secure password
+   * @param {number} length - Password length
+   * @param {Object} options - Generation options
    * @returns {string} Generated password
    */
-  generatePassword(options = {}) {
-    const length = options.length || this.minLength;
-    const includeUppercase = options.includeUppercase !== false;
-    const includeLowercase = options.includeLowercase !== false;
-    const includeNumbers = options.includeNumbers !== false;
-    const includeSpecialChars = options.includeSpecialChars !== false;
+  generatePassword(length = 12, options = {}) {
+    const {
+      includeUppercase = true,
+      includeLowercase = true,
+      includeNumbers = true,
+      includeSpecialChars = true,
+      excludeSimilar = true
+    } = options;
 
-    const chars = {
-      uppercase: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
-      lowercase: 'abcdefghijklmnopqrstuvwxyz',
-      numbers: '0123456789',
-      special: '!@#$%^&*()_+-=[]{}|;:,.<>?'
-    };
+    const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const lowercase = 'abcdefghijklmnopqrstuvwxyz';
+    const numbers = '0123456789';
+    const special = '!@#$%^&*()_+-=[]{}|;:,.<>?';
+    const similar = 'il1Lo0O';
 
-    let availableChars = '';
-    let requiredChars = '';
+    let chars = '';
+    if (includeUppercase) chars += uppercase;
+    if (includeLowercase) chars += lowercase;
+    if (includeNumbers) chars += numbers;
+    if (includeSpecialChars) chars += special;
 
-    if (includeUppercase) {
-      availableChars += chars.uppercase;
-      requiredChars += chars.uppercase[Math.floor(Math.random() * chars.uppercase.length)];
-    }
-    if (includeLowercase) {
-      availableChars += chars.lowercase;
-      requiredChars += chars.lowercase[Math.floor(Math.random() * chars.lowercase.length)];
-    }
-    if (includeNumbers) {
-      availableChars += chars.numbers;
-      requiredChars += chars.numbers[Math.floor(Math.random() * chars.numbers.length)];
-    }
-    if (includeSpecialChars) {
-      availableChars += chars.special;
-      requiredChars += chars.special[Math.floor(Math.random() * chars.special.length)];
+    if (excludeSimilar) {
+      chars = chars.split('').filter(char => !similar.includes(char)).join('');
     }
 
-    // Generate random characters
     let password = '';
-    for (let i = 0; i < length - requiredChars.length; i++) {
-      password += availableChars[Math.floor(Math.random() * availableChars.length)];
+    for (let i = 0; i < length; i++) {
+      password += chars.charAt(Math.floor(Math.random() * chars.length));
     }
 
-    // Add required characters
-    password += requiredChars;
-
-    // Shuffle the password
-    return password.split('').sort(() => Math.random() - 0.5).join('');
+    return password;
   }
 }
 
 /**
- * Input sanitizer for XSS prevention
+ * Input sanitizer for security
+ * Sanitizes various types of input to prevent XSS and injection attacks
  */
 class InputSanitizer {
-  constructor(options = {}) {
-    this.allowedTags = options.allowedTags || [];
-    this.allowedAttributes = options.allowedAttributes || [];
-    this.stripScripts = options.stripScripts !== false;
-    this.stripStyles = options.stripStyles !== false;
+  constructor() {
+    this.htmlEntities = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#x27;',
+      '/': '&#x2F;'
+    };
   }
 
   /**
    * Sanitize HTML content
    * @param {string} html - HTML content to sanitize
+   * @param {Object} options - Sanitization options
    * @returns {string} Sanitized HTML
    */
-  sanitizeHTML(html) {
-    if (!html || typeof html !== 'string') {
-      return '';
-    }
+  sanitizeHtml(html, options = {}) {
+    const {
+      allowedTags = ['p', 'br', 'strong', 'em', 'u', 'ol', 'ul', 'li'],
+      allowedAttributes = ['class', 'id'],
+      stripComments = true
+    } = options;
+
+    if (!html) return '';
 
     let sanitized = html;
 
-    // Remove script tags and their content
-    if (this.stripScripts) {
-      sanitized = sanitized.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+    // Remove comments
+    if (stripComments) {
+      sanitized = sanitized.replace(/<!--[\s\S]*?-->/g, '');
     }
 
-    // Remove style tags and their content
-    if (this.stripStyles) {
-      sanitized = sanitized.replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '');
-    }
-
-    // Remove dangerous attributes
+    // Remove script tags and event handlers
+    sanitized = sanitized.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
     sanitized = sanitized.replace(/\s*on\w+\s*=\s*["'][^"']*["']/gi, '');
-    sanitized = sanitized.replace(/\s*javascript\s*:/gi, '');
-    sanitized = sanitized.replace(/\s*data\s*:/gi, '');
 
-    // Remove iframe tags
-    sanitized = sanitized.replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '');
+    // Remove dangerous tags
+    const dangerousTags = ['script', 'object', 'embed', 'form', 'input', 'textarea', 'select', 'button'];
+    dangerousTags.forEach(tag => {
+      const regex = new RegExp(`<\\/?${tag}\\b[^>]*>`, 'gi');
+      sanitized = sanitized.replace(regex, '');
+    });
 
-    // Remove object and embed tags
-    sanitized = sanitized.replace(/<(object|embed)\b[^<]*(?:(?!<\/(object|embed)>)<[^<]*)*<\/(object|embed)>/gi, '');
+    // Allow only specified tags
+    const tagRegex = /<(\/?)([a-zA-Z][a-zA-Z0-9]*)\b[^>]*>/g;
+    sanitized = sanitized.replace(tagRegex, (match, slash, tagName) => {
+      if (allowedTags.includes(tagName.toLowerCase())) {
+        return match;
+      }
+      return '';
+    });
 
     return sanitized;
   }
@@ -223,64 +234,107 @@ class InputSanitizer {
    * @returns {string} Sanitized text
    */
   sanitizeText(text) {
-    if (!text || typeof text !== 'string') {
-      return '';
-    }
-
+    if (!text) return '';
+    
     return text
-      .replace(/[<>]/g, '') // Remove angle brackets
-      .replace(/javascript:/gi, '') // Remove javascript protocol
-      .replace(/data:/gi, '') // Remove data protocol
+      .replace(/[<>]/g, '')
+      .replace(/javascript:/gi, '')
+      .replace(/vbscript:/gi, '')
+      .replace(/onload/gi, '')
+      .replace(/onerror/gi, '')
       .trim();
   }
 
   /**
-   * Validate and sanitize URL
-   * @param {string} url - URL to validate and sanitize
-   * @returns {string|null} Sanitized URL or null if invalid
+   * Sanitize URL
+   * @param {string} url - URL to sanitize
+   * @param {Object} options - Sanitization options
+   * @returns {string} Sanitized URL
    */
-  sanitizeURL(url) {
-    if (!url || typeof url !== 'string') {
-      return null;
-    }
+  sanitizeUrl(url, options = {}) {
+    const {
+      allowedProtocols = ['http:', 'https:', 'mailto:', 'tel:'],
+      requireProtocol = true
+    } = options;
+
+    if (!url) return '';
+
+    let sanitized = url.trim();
 
     // Remove dangerous protocols
-    const dangerousProtocols = ['javascript:', 'data:', 'vbscript:', 'file:'];
-    const lowerUrl = url.toLowerCase();
-    
-    for (const protocol of dangerousProtocols) {
-      if (lowerUrl.startsWith(protocol)) {
-        return null;
+    const dangerousProtocols = ['javascript:', 'vbscript:', 'data:', 'file:'];
+    dangerousProtocols.forEach(protocol => {
+      if (sanitized.toLowerCase().startsWith(protocol)) {
+        sanitized = sanitized.replace(new RegExp(`^${protocol}`, 'i'), '');
       }
+    });
+
+    // Add protocol if required and missing
+    if (requireProtocol && !/^[a-zA-Z]+:/.test(sanitized)) {
+      sanitized = 'https://' + sanitized;
     }
 
-    // Ensure URL has a safe protocol
-    if (!url.match(/^https?:\/\//)) {
-      return null;
+    // Validate protocol
+    try {
+      const urlObj = new URL(sanitized);
+      if (!allowedProtocols.includes(urlObj.protocol)) {
+        return '';
+      }
+    } catch (error) {
+      return '';
     }
 
-    return url.trim();
+    return sanitized;
   }
 
   /**
    * Sanitize email address
    * @param {string} email - Email to sanitize
-   * @returns {string|null} Sanitized email or null if invalid
+   * @returns {string} Sanitized email
    */
   sanitizeEmail(email) {
-    if (!email || typeof email !== 'string') {
-      return null;
-    }
+    if (!email) return '';
 
     const sanitized = email.trim().toLowerCase();
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    
+    // Basic email validation
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    
+    if (!emailRegex.test(sanitized)) {
+      return '';
+    }
 
-    return emailRegex.test(sanitized) ? sanitized : null;
+    return sanitized;
+  }
+
+  /**
+   * Sanitize SQL input (basic)
+   * @param {string} input - Input to sanitize
+   * @returns {string} Sanitized input
+   */
+  sanitizeSql(input) {
+    if (!input) return '';
+
+    return input
+      .replace(/['";\\]/g, '')
+      .replace(/--/g, '')
+      .replace(/\/\*/g, '')
+      .replace(/\*\//g, '')
+      .replace(/union/gi, '')
+      .replace(/select/gi, '')
+      .replace(/insert/gi, '')
+      .replace(/update/gi, '')
+      .replace(/delete/gi, '')
+      .replace(/drop/gi, '')
+      .replace(/create/gi, '')
+      .replace(/alter/gi, '')
+      .trim();
   }
 }
 
 /**
- * CSRF token generator and validator
+ * CSRF protection utilities
+ * Generates and validates CSRF tokens
  */
 class CSRFProtection {
   constructor(options = {}) {
@@ -291,29 +345,18 @@ class CSRFProtection {
   }
 
   /**
-   * Generate a secret key
-   * @returns {string} Generated secret
-   */
-  generateSecret() {
-    return Array.from(crypto.getRandomValues(new Uint8Array(32)))
-      .map(b => b.toString(16).padStart(2, '0'))
-      .join('');
-  }
-
-  /**
    * Generate CSRF token
    * @param {string} sessionId - Session identifier
    * @returns {string} Generated token
    */
   generateToken(sessionId) {
-    const token = Array.from(crypto.getRandomValues(new Uint8Array(this.tokenLength)))
-      .map(b => b.toString(16).padStart(2, '0'))
-      .join('');
-
+    const token = this.generateRandomString(this.tokenLength);
+    const expiry = Date.now() + this.expiryTime;
+    
     this.tokens.set(token, {
       sessionId,
-      createdAt: Date.now(),
-      expiresAt: Date.now() + this.expiryTime
+      expiry,
+      used: false
     });
 
     return token;
@@ -326,20 +369,24 @@ class CSRFProtection {
    * @returns {boolean} Whether token is valid
    */
   validateToken(token, sessionId) {
+    if (!token || !sessionId) return false;
+
     const tokenData = this.tokens.get(token);
     
-    if (!tokenData) {
-      return false;
-    }
-
-    if (tokenData.sessionId !== sessionId) {
-      return false;
-    }
-
-    if (Date.now() > tokenData.expiresAt) {
+    if (!tokenData) return false;
+    
+    if (tokenData.sessionId !== sessionId) return false;
+    
+    if (tokenData.expiry < Date.now()) {
       this.tokens.delete(token);
       return false;
     }
+    
+    if (tokenData.used) return false;
+
+    // Mark token as used
+    tokenData.used = true;
+    this.tokens.set(token, tokenData);
 
     return true;
   }
@@ -358,98 +405,88 @@ class CSRFProtection {
   cleanExpiredTokens() {
     const now = Date.now();
     for (const [token, data] of this.tokens.entries()) {
-      if (now > data.expiresAt) {
+      if (data.expiry < now) {
         this.tokens.delete(token);
       }
     }
   }
 
   /**
-   * Get token statistics
-   * @returns {Object} Token statistics
+   * Generate random string
+   * @param {number} length - String length
+   * @returns {string} Random string
    */
-  getStats() {
-    const now = Date.now();
-    let activeTokens = 0;
-    let expiredTokens = 0;
-
-    for (const data of this.tokens.values()) {
-      if (now > data.expiresAt) {
-        expiredTokens++;
-      } else {
-        activeTokens++;
-      }
+  generateRandomString(length) {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    for (let i = 0; i < length; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
     }
+    return result;
+  }
 
-    return {
-      totalTokens: this.tokens.size,
-      activeTokens,
-      expiredTokens
-    };
+  /**
+   * Generate secret for token signing
+   * @returns {string} Generated secret
+   */
+  generateSecret() {
+    return this.generateRandomString(64);
   }
 }
 
 /**
- * Rate limiting for security
+ * Security rate limiter
+ * Rate limiting specifically for security-sensitive operations
  */
 class SecurityRateLimiter {
   constructor(options = {}) {
-    this.windowMs = options.windowMs || 15 * 60 * 1000; // 15 minutes
     this.maxAttempts = options.maxAttempts || 5;
+    this.windowMs = options.windowMs || 15 * 60 * 1000; // 15 minutes
     this.blockDuration = options.blockDuration || 60 * 60 * 1000; // 1 hour
     this.attempts = new Map();
     this.blocked = new Map();
   }
 
   /**
-   * Check if action is allowed
-   * @param {string} key - Rate limit key (IP, user ID, etc.)
-   * @param {string} action - Action type
+   * Check if operation is allowed
+   * @param {string} key - Rate limit key (usually IP or user ID)
+   * @param {string} operation - Operation type
    * @returns {Object} Rate limit result
    */
-  check(key, action = 'default') {
-    const fullKey = `${key}:${action}`;
+  check(key, operation = 'default') {
+    const fullKey = `${key}:${operation}`;
     const now = Date.now();
 
     // Check if key is blocked
-    const blockData = this.blocked.get(fullKey);
-    if (blockData && now < blockData.until) {
+    const blockedUntil = this.blocked.get(fullKey);
+    if (blockedUntil && blockedUntil > now) {
       return {
         allowed: false,
-        reason: 'blocked',
-        remainingTime: blockData.until - now
+        blocked: true,
+        remainingTime: blockedUntil - now,
+        reason: 'Rate limit exceeded'
       };
     }
 
-    // Remove expired block
-    if (blockData && now >= blockData.until) {
+    // Remove block if expired
+    if (blockedUntil && blockedUntil <= now) {
       this.blocked.delete(fullKey);
     }
 
-    // Get or create attempts data
-    if (!this.attempts.has(fullKey)) {
-      this.attempts.set(fullKey, []);
-    }
+    // Get current attempts
+    const attempts = this.attempts.get(fullKey) || [];
+    const validAttempts = attempts.filter(timestamp => timestamp > now - this.windowMs);
 
-    const attempts = this.attempts.get(fullKey);
-    const windowStart = now - this.windowMs;
-
-    // Remove old attempts
-    const validAttempts = attempts.filter(timestamp => timestamp > windowStart);
-    this.attempts.set(fullKey, validAttempts);
-
-    // Check if limit exceeded
     if (validAttempts.length >= this.maxAttempts) {
       // Block the key
-      this.blocked.set(fullKey, {
-        until: now + this.blockDuration,
-        reason: 'rate_limit_exceeded'
-      });
+      this.blocked.set(fullKey, now + this.blockDuration);
+      this.attempts.delete(fullKey);
 
       return {
         allowed: false,
-        reason: 'rate_limit_exceeded',
-        remainingTime: this.blockDuration
+        blocked: true,
+        remainingTime: this.blockDuration,
+        reason: 'Rate limit exceeded'
       };
     }
 
@@ -459,58 +496,44 @@ class SecurityRateLimiter {
 
     return {
       allowed: true,
+      blocked: false,
       remainingAttempts: this.maxAttempts - validAttempts.length,
-      resetTime: windowStart + this.windowMs
+      resetTime: now + this.windowMs
     };
   }
 
   /**
-   * Manually block a key
-   * @param {string} key - Key to block
-   * @param {string} action - Action type
-   * @param {number} duration - Block duration in milliseconds
+   * Reset attempts for a key
+   * @param {string} key - Rate limit key
+   * @param {string} operation - Operation type
    */
-  block(key, action = 'default', duration = this.blockDuration) {
-    const fullKey = `${key}:${action}`;
-    this.blocked.set(fullKey, {
-      until: Date.now() + duration,
-      reason: 'manual_block'
-    });
-  }
-
-  /**
-   * Unblock a key
-   * @param {string} key - Key to unblock
-   * @param {string} action - Action type
-   */
-  unblock(key, action = 'default') {
-    const fullKey = `${key}:${action}`;
-    this.blocked.delete(fullKey);
+  reset(key, operation = 'default') {
+    const fullKey = `${key}:${operation}`;
     this.attempts.delete(fullKey);
+    this.blocked.delete(fullKey);
   }
 
   /**
-   * Get statistics
-   * @returns {Object} Rate limiter statistics
+   * Get rate limit status
+   * @param {string} key - Rate limit key
+   * @param {string} operation - Operation type
+   * @returns {Object} Rate limit status
    */
-  getStats() {
+  getStatus(key, operation = 'default') {
+    const fullKey = `${key}:${operation}`;
     const now = Date.now();
-    let activeBlocks = 0;
-    let expiredBlocks = 0;
 
-    for (const data of this.blocked.values()) {
-      if (now < data.until) {
-        activeBlocks++;
-      } else {
-        expiredBlocks++;
-      }
-    }
+    const blockedUntil = this.blocked.get(fullKey);
+    const attempts = this.attempts.get(fullKey) || [];
+    const validAttempts = attempts.filter(timestamp => timestamp > now - this.windowMs);
 
     return {
-      totalAttempts: Array.from(this.attempts.values()).reduce((sum, attempts) => sum + attempts.length, 0),
-      totalBlocks: this.blocked.size,
-      activeBlocks,
-      expiredBlocks
+      isBlocked: blockedUntil && blockedUntil > now,
+      blockedUntil,
+      attempts: validAttempts.length,
+      maxAttempts: this.maxAttempts,
+      remainingAttempts: Math.max(0, this.maxAttempts - validAttempts.length),
+      resetTime: now + this.windowMs
     };
   }
 }
@@ -520,8 +543,8 @@ class SecurityRateLimiter {
  */
 const securityUtils = {
   /**
-   * Hash a string using SHA-256
-   * @param {string} input - String to hash
+   * Hash string using SHA-256
+   * @param {string} input - Input to hash
    * @returns {Promise<string>} Hashed string
    */
   async hash(input) {
@@ -534,93 +557,91 @@ const securityUtils = {
 
   /**
    * Generate random string
-   * @param {number} length - Length of string
+   * @param {number} length - String length
+   * @param {string} charset - Character set
    * @returns {string} Random string
    */
-  generateRandomString(length = 32) {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  generateRandomString(length = 32, charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789') {
     let result = '';
-    const randomArray = new Uint8Array(length);
-    crypto.getRandomValues(randomArray);
-    
     for (let i = 0; i < length; i++) {
-      result += chars[randomArray[i] % chars.length];
+      result += charset.charAt(Math.floor(Math.random() * charset.length));
     }
-    
     return result;
   },
 
   /**
-   * Validate password against common patterns
-   * @param {string} password - Password to validate
-   * @returns {Object} Validation result
+   * Generate secure random bytes
+   * @param {number} length - Number of bytes
+   * @returns {Uint8Array} Random bytes
    */
-  validatePassword(password) {
-    const analyzer = new PasswordStrengthAnalyzer();
-    return analyzer.analyze(password);
+  generateRandomBytes(length = 32) {
+    const array = new Uint8Array(length);
+    crypto.getRandomValues(array);
+    return array;
   },
 
   /**
-   * Generate strong password
-   * @param {Object} options - Generation options
-   * @returns {string} Generated password
+   * Escape HTML entities
+   * @param {string} text - Text to escape
+   * @returns {string} Escaped text
    */
-  generatePassword(options = {}) {
-    const analyzer = new PasswordStrengthAnalyzer();
-    return analyzer.generatePassword(options);
-  },
-
-  /**
-   * Sanitize user input
-   * @param {string} input - Input to sanitize
-   * @param {string} type - Input type ('text', 'html', 'url', 'email')
-   * @returns {string|null} Sanitized input
-   */
-  sanitizeInput(input, type = 'text') {
-    const sanitizer = new InputSanitizer();
+  escapeHtml(text) {
+    const htmlEntities = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#x27;',
+      '/': '&#x2F;'
+    };
     
-    switch (type) {
-      case 'html':
-        return sanitizer.sanitizeHTML(input);
-      case 'url':
-        return sanitizer.sanitizeURL(input);
-      case 'email':
-        return sanitizer.sanitizeEmail(input);
-      default:
-        return sanitizer.sanitizeText(input);
+    return text.replace(/[&<>"'/]/g, char => htmlEntities[char]);
+  },
+
+  /**
+   * Validate email format
+   * @param {string} email - Email to validate
+   * @returns {boolean} Whether email is valid
+   */
+  isValidEmail(email) {
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    return emailRegex.test(email);
+  },
+
+  /**
+   * Validate URL format
+   * @param {string} url - URL to validate
+   * @returns {boolean} Whether URL is valid
+   */
+  isValidUrl(url) {
+    try {
+      new URL(url);
+      return true;
+    } catch {
+      return false;
     }
   },
 
   /**
    * Check if string contains potentially dangerous content
    * @param {string} input - Input to check
-   * @returns {Object} Security check result
+   * @returns {boolean} Whether input is potentially dangerous
    */
-  securityCheck(input) {
+  isPotentiallyDangerous(input) {
     const dangerousPatterns = [
-      /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi,
-      /javascript:/gi,
-      /data:/gi,
-      /vbscript:/gi,
-      /on\w+\s*=/gi,
-      /<iframe\b/gi,
-      /<object\b/gi,
-      /<embed\b/gi
+      /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/i,
+      /javascript:/i,
+      /vbscript:/i,
+      /data:/i,
+      /file:/i,
+      /on\w+\s*=/i,
+      /union\s+select/i,
+      /<iframe/i,
+      /<object/i,
+      /<embed/i
     ];
 
-    const threats = [];
-    
-    for (const pattern of dangerousPatterns) {
-      if (pattern.test(input)) {
-        threats.push(pattern.source);
-      }
-    }
-
-    return {
-      isSafe: threats.length === 0,
-      threats,
-      riskLevel: threats.length === 0 ? 'low' : threats.length > 2 ? 'high' : 'medium'
-    };
+    return dangerousPatterns.some(pattern => pattern.test(input));
   }
 };
 
