@@ -1,0 +1,106 @@
+/* ========================================
+   RESPONSIVE GRID SYSTEM
+   Professional CSS Grid utilities for modern layouts
+   ======================================== */
+
+/* Base Grid Container */
+.grid-container {
+    display: grid;
+    gap: 1rem;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+  }
+  
+  /* Responsive Grid Columns */
+  .grid-1 { grid-template-columns: repeat(1, 1fr); }
+  .grid-2 { grid-template-columns: repeat(2, 1fr); }
+  .grid-3 { grid-template-columns: repeat(3, 1fr); }
+  .grid-4 { grid-template-columns: repeat(4, 1fr); }
+  .grid-5 { grid-template-columns: repeat(5, 1fr); }
+  .grid-6 { grid-template-columns: repeat(6, 1fr); }
+  .grid-12 { grid-template-columns: repeat(12, 1fr); }
+  
+  /* Auto-fit Grid */
+  .grid-auto-fit {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  }
+  
+  .grid-auto-fill {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  }
+  
+  /* Responsive Breakpoints */
+  @media (max-width: 768px) {
+    .grid-2, .grid-3, .grid-4, .grid-5, .grid-6, .grid-12 {
+      grid-template-columns: 1fr;
+    }
+    
+    .grid-auto-fit {
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+  }
+  
+  @media (min-width: 769px) and (max-width: 1024px) {
+    .grid-4, .grid-5, .grid-6, .grid-12 {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .grid-3 {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  
+  /* Grid Areas */
+  .grid-areas {
+    grid-template-areas: 
+      "header header header"
+      "sidebar main main"
+      "footer footer footer";
+  }
+  
+  .grid-header { grid-area: header; }
+  .grid-sidebar { grid-area: sidebar; }
+  .grid-main { grid-area: main; }
+  .grid-footer { grid-area: footer; }
+  
+  /* Masonry-like Grid */
+  .grid-masonry {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    grid-auto-rows: 0;
+    grid-auto-flow: dense;
+  }
+  
+  /* Grid Alignment Utilities */
+  .grid-center { justify-items: center; align-items: center; }
+  .grid-start { justify-items: start; align-items: start; }
+  .grid-end { justify-items: end; align-items: end; }
+  .grid-stretch { justify-items: stretch; align-items: stretch; }
+  
+  /* Grid Gap Utilities */
+  .gap-xs { gap: 0.25rem; }
+  .gap-sm { gap: 0.5rem; }
+  .gap-md { gap: 1rem; }
+  .gap-lg { gap: 1.5rem; }
+  .gap-xl { gap: 2rem; }
+  
+  /* Usage Examples:
+     <div class="grid-container grid-3 gap-md">
+       <div>Item 1</div>
+       <div>Item 2</div>
+       <div>Item 3</div>
+     </div>
+     
+     <div class="grid-container grid-auto-fit gap-lg">
+       <div>Auto-fit item</div>
+       <div>Auto-fit item</div>
+     </div>
+     
+     <div class="grid-container grid-areas">
+       <header class="grid-header">Header</header>
+       <aside class="grid-sidebar">Sidebar</aside>
+       <main class="grid-main">Main Content</main>
+       <footer class="grid-footer">Footer</footer>
+     </div>
+  */
