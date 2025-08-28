@@ -1,0 +1,97 @@
+/* ========================================
+   CARD COMPONENTS
+   ======================================== */
+
+/* Basic card */
+.card {
+  background: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  margin: 1rem 0;
+  transition: all 0.2s ease;
+}
+
+.card:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+/* Card header */
+.card-header {
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
+}
+
+.card-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+}
+
+.card-subtitle {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0.25rem 0 0 0;
+}
+
+/* Card content */
+.card-content {
+  color: #374151;
+  line-height: 1.6;
+}
+
+/* Card footer */
+.card-footer {
+  border-top: 1px solid #e5e7eb;
+  padding-top: 1rem;
+  margin-top: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Card variants */
+.card-primary {
+  border-left: 4px solid #3b82f6;
+}
+
+.card-success {
+  border-left: 4px solid #10b981;
+}
+
+.card-warning {
+  border-left: 4px solid #f59e0b;
+}
+
+.card-danger {
+  border-left: 4px solid #ef4444;
+}
+
+/* Card grid */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  padding: 1rem;
+}
+
+/* Responsive cards */
+@media (max-width: 768px) {
+  .card {
+    padding: 1rem;
+    margin: 0.5rem 0;
+  }
+  
+  .card-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    padding: 0.5rem;
+  }
+  
+  .card-title {
+    font-size: 1.125rem;
+  }
+}
