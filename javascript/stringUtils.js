@@ -164,28 +164,78 @@ function toTitleCase(str, exceptions = ['a', 'an', 'and', 'as', 'at', 'but', 'by
       .replace(/[\s_]+/g, '-')
       .toLowerCase();
   }
-  
-  // Example usage:
-  // console.log(toTitleCase('hello world')); // "Hello World"
-  // console.log(slugify('Hello World!')); // "hello-world"
-  // console.log(truncate('This is a long string', 10)); // "This is..."
-  // console.log(randomString(10)); // "aB3xK9mN2p"
-  // console.log(isPalindrome('A man a plan a canal Panama')); // true
-  // console.log(wordFrequency('hello world hello')); // { hello: 2, world: 1 }
-  // console.log(extractNumbers('abc123def456')); // "123456"
-  // console.log(maskString('1234567890')); // "12******90"
-  // console.log(toCamelCase('hello world')); // "helloWorld"
-  // console.log(toKebabCase('helloWorld')); // "hello-world"
-  
-  module.exports = {
-    toTitleCase,
-    slugify,
-    truncate,
-    randomString,
-    isPalindrome,
-    wordFrequency,
-    extractNumbers,
-    maskString,
-    toCamelCase,
-    toKebabCase
-  };
+
+/**
+ * String utility functions for common operations
+ */
+
+/**
+ * Capitalize first letter
+ * @param {string} str - String to capitalize
+ * @returns {string} Capitalized string
+ */
+const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1);
+
+/**
+ * Convert to camelCase
+ * @param {string} str - String to convert
+ * @returns {string} camelCase string
+ */
+const toCamelCase = (str) => {
+  return str.replace(/[-_\s]+(.)?/g, (_, c) => c ? c.toUpperCase() : '');
+};
+
+/**
+ * Convert to kebab-case
+ * @param {string} str - String to convert
+ * @returns {string} kebab-case string
+ */
+const toKebabCase = (str) => {
+  return str.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+};
+
+/**
+ * Convert to snake_case
+ * @param {string} str - String to convert
+ * @returns {string} snake_case string
+ */
+const toSnakeCase = (str) => {
+  return str.replace(/([a-z])([A-Z])/g, '$1_$2').toLowerCase();
+};
+
+/**
+ * Reverse string
+ * @param {string} str - String to reverse
+ * @returns {string} Reversed string
+ */
+const reverse = (str) => str.split('').reverse().join('');
+
+/**
+ * Count words in string
+ * @param {string} str - String to count words
+ * @returns {number} Word count
+ */
+const wordCount = (str) => str.trim().split(/\s+/).length;
+
+/**
+ * Generate slug from string
+ * @param {string} str - String to slugify
+ * @returns {string} Slug string
+ */
+const slugify = (str) => {
+  return str
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_-]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+};
+
+module.exports = {
+  capitalize,
+  toCamelCase,
+  toKebabCase,
+  toSnakeCase,
+  reverse,
+  wordCount,
+  slugify
+};
