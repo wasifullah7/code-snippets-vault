@@ -1,37 +1,54 @@
 /**
- * Advanced file utilities for modern JavaScript
- * Comprehensive file handling, validation, and manipulation utilities
+ * File utility functions for file operations
  */
 
 /**
- * Get file extension from filename or path
- * @param {string} filename - File name or path
+ * Get file extension from filename
+ * @param {string} filename - Filename to get extension from
  * @returns {string} File extension (without dot)
  */
-function getFileExtension(filename) {
+const getFileExtension = (filename) => {
   if (!filename || typeof filename !== 'string') return '';
-  const lastDotIndex = filename.lastIndexOf('.');
-  return lastDotIndex > 0 ? filename.slice(lastDotIndex + 1).toLowerCase() : '';
-}
+  const parts = filename.split('.');
+  return parts.length > 1 ? parts.pop().toLowerCase() : '';
+};
 
 /**
- * Get file name without extension
- * @param {string} filename - File name or path
- * @returns {string} File name without extension
+ * Get filename without extension
+ * @param {string} filename - Filename to remove extension from
+ * @returns {string} Filename without extension
  */
-function getFileNameWithoutExtension(filename) {
+const getFilenameWithoutExtension = (filename) => {
   if (!filename || typeof filename !== 'string') return '';
   const lastDotIndex = filename.lastIndexOf('.');
-  return lastDotIndex > 0 ? filename.slice(0, lastDotIndex) : filename;
-}
+  return lastDotIndex > 0 ? filename.substring(0, lastDotIndex) : filename;
+};
 
 /**
- * Get file size in human readable format
+ * Check if file has specific extension
+ * @param {string} filename - Filename to check
+ * @param {string|Array} extensions - Extension(s) to check for
+ * @returns {boolean} True if file has specified extension
+ */
+const hasFileExtension = (filename, extensions) => {
+  if (!filename || !extensions) return false;
+  
+  const fileExt = getFileExtension(filename);
+  
+  if (Array.isArray(extensions)) {
+    return extensions.some(ext => ext.toLowerCase() === fileExt);
+  }
+  
+  return fileExt === extensions.toLowerCase();
+};
+
+/**
+ * Format file size in human readable format
  * @param {number} bytes - File size in bytes
- * @param {number} decimals - Number of decimal places
- * @returns {string} Human readable file size
+ * @param {number} decimals - Number of decimal places (default: 2)
+ * @returns {string} Formatted file size
  */
-function formatFileSize(bytes, decimals = 2) {
+const formatFileSize = (bytes, decimals = 2) => {
   if (bytes === 0) return '0 Bytes';
   
   const k = 1024;
@@ -41,323 +58,355 @@ function formatFileSize(bytes, decimals = 2) {
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
-}
+};
 
 /**
- * Validate file type by extension
- * @param {string} filename - File name
- * @param {Array} allowedExtensions - Array of allowed extensions
- * @returns {boolean} Whether file type is valid
+ * Convert file size string to bytes
+ * @param {string} sizeString - File size string (e.g., "1.5 MB")
+ * @returns {number} Size in bytes
  */
-function isValidFileType(filename, allowedExtensions = []) {
-  const extension = getFileExtension(filename);
-  return allowedExtensions.length === 0 || allowedExtensions.includes(extension);
-}
-
-/**
- * Validate file size
- * @param {number} fileSize - File size in bytes
- * @param {number} maxSize - Maximum file size in bytes
- * @returns {boolean} Whether file size is valid
- */
-function isValidFileSize(fileSize, maxSize) {
-  return fileSize <= maxSize;
-}
-
-/**
- * Generate unique filename
- * @param {string} originalName - Original filename
- * @param {string} prefix - Optional prefix
- * @returns {string} Unique filename
- */
-function generateUniqueFilename(originalName, prefix = '') {
-  const timestamp = Date.now();
-  const random = Math.random().toString(36).substring(2, 8);
-  const extension = getFileExtension(originalName);
-  const nameWithoutExt = getFileNameWithoutExtension(originalName);
+const parseFileSize = (sizeString) => {
+  if (!sizeString || typeof sizeString !== 'string') return 0;
   
-  const uniqueName = `${prefix}${nameWithoutExt}_${timestamp}_${random}`;
-  return extension ? `${uniqueName}.${extension}` : uniqueName;
-}
-
-/**
- * Sanitize filename (remove special characters)
- * @param {string} filename - Original filename
- * @param {string} replacement - Character to replace invalid chars with
- * @returns {string} Sanitized filename
- */
-function sanitizeFilename(filename, replacement = '_') {
-  if (!filename || typeof filename !== 'string') return '';
-  
-  // Remove or replace invalid characters
-  return filename
-    .replace(/[<>:"/\\|?*]/g, replacement)
-    .replace(/\s+/g, replacement)
-    .replace(new RegExp(`${replacement}+`, 'g'), replacement)
-    .replace(new RegExp(`^${replacement}|${replacement}$`, 'g'), '');
-}
-
-/**
- * Get MIME type from file extension
- * @param {string} filename - File name
- * @returns {string} MIME type
- */
-function getMimeType(filename) {
-  const extension = getFileExtension(filename);
-  const mimeTypes = {
-    // Images
-    'jpg': 'image/jpeg',
-    'jpeg': 'image/jpeg',
-    'png': 'image/png',
-    'gif': 'image/gif',
-    'webp': 'image/webp',
-    'svg': 'image/svg+xml',
-    'ico': 'image/x-icon',
-    
-    // Documents
-    'pdf': 'application/pdf',
-    'doc': 'application/msword',
-    'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    'xls': 'application/vnd.ms-excel',
-    'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    'ppt': 'application/vnd.ms-powerpoint',
-    'pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-    
-    // Text
-    'txt': 'text/plain',
-    'html': 'text/html',
-    'css': 'text/css',
-    'js': 'application/javascript',
-    'json': 'application/json',
-    'xml': 'application/xml',
-    'csv': 'text/csv',
-    
-    // Archives
-    'zip': 'application/zip',
-    'rar': 'application/vnd.rar',
-    '7z': 'application/x-7z-compressed',
-    'tar': 'application/x-tar',
-    'gz': 'application/gzip',
-    
-    // Audio
-    'mp3': 'audio/mpeg',
-    'wav': 'audio/wav',
-    'ogg': 'audio/ogg',
-    'm4a': 'audio/mp4',
-    
-    // Video
-    'mp4': 'video/mp4',
-    'avi': 'video/x-msvideo',
-    'mov': 'video/quicktime',
-    'wmv': 'video/x-ms-wmv',
-    'flv': 'video/x-flv',
-    'webm': 'video/webm'
+  const units = {
+    'B': 1,
+    'KB': 1024,
+    'MB': 1024 * 1024,
+    'GB': 1024 * 1024 * 1024,
+    'TB': 1024 * 1024 * 1024 * 1024
   };
   
-  return mimeTypes[extension] || 'application/octet-stream';
-}
+  const match = sizeString.match(/^([\d.]+)\s*([KMGT]?B)$/i);
+  if (!match) return 0;
+  
+  const value = parseFloat(match[1]);
+  const unit = match[2].toUpperCase();
+  
+  return value * (units[unit] || 1);
+};
 
 /**
  * Check if file is an image
- * @param {string} filename - File name
- * @returns {boolean} Whether file is an image
+ * @param {string} filename - Filename to check
+ * @returns {boolean} True if file is an image
  */
-function isImage(filename) {
-  const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'ico', 'bmp', 'tiff'];
-  return imageExtensions.includes(getFileExtension(filename));
-}
-
-/**
- * Check if file is a document
- * @param {string} filename - File name
- * @returns {boolean} Whether file is a document
- */
-function isDocument(filename) {
-  const docExtensions = ['pdf', 'doc', 'docx', 'txt', 'rtf', 'odt'];
-  return docExtensions.includes(getFileExtension(filename));
-}
+const isImageFile = (filename) => {
+  const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg', 'ico'];
+  return hasFileExtension(filename, imageExtensions);
+};
 
 /**
  * Check if file is a video
- * @param {string} filename - File name
- * @returns {boolean} Whether file is a video
+ * @param {string} filename - Filename to check
+ * @returns {boolean} True if file is a video
  */
-function isVideo(filename) {
+const isVideoFile = (filename) => {
   const videoExtensions = ['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm', 'mkv', 'm4v'];
-  return videoExtensions.includes(getFileExtension(filename));
-}
+  return hasFileExtension(filename, videoExtensions);
+};
 
 /**
  * Check if file is an audio file
- * @param {string} filename - File name
- * @returns {boolean} Whether file is an audio file
+ * @param {string} filename - Filename to check
+ * @returns {boolean} True if file is an audio file
  */
-function isAudio(filename) {
-  const audioExtensions = ['mp3', 'wav', 'ogg', 'm4a', 'flac', 'aac'];
-  return audioExtensions.includes(getFileExtension(filename));
-}
+const isAudioFile = (filename) => {
+  const audioExtensions = ['mp3', 'wav', 'ogg', 'aac', 'flac', 'wma', 'm4a'];
+  return hasFileExtension(filename, audioExtensions);
+};
 
 /**
- * Parse file path into components
- * @param {string} filePath - File path
- * @returns {Object} Parsed path components
+ * Check if file is a document
+ * @param {string} filename - Filename to check
+ * @returns {boolean} True if file is a document
  */
-function parseFilePath(filePath) {
-  if (!filePath || typeof filePath !== 'string') {
-    return { directory: '', filename: '', extension: '', name: '' };
-  }
-  
-  const lastSlashIndex = filePath.lastIndexOf('/');
-  const lastBackslashIndex = filePath.lastIndexOf('\\');
-  const lastSeparatorIndex = Math.max(lastSlashIndex, lastBackslashIndex);
-  
-  const directory = lastSeparatorIndex > 0 ? filePath.slice(0, lastSeparatorIndex + 1) : '';
-  const filename = lastSeparatorIndex >= 0 ? filePath.slice(lastSeparatorIndex + 1) : filePath;
-  const extension = getFileExtension(filename);
-  const name = getFileNameWithoutExtension(filename);
-  
-  return { directory, filename, extension, name };
-}
+const isDocumentFile = (filename) => {
+  const documentExtensions = ['pdf', 'doc', 'docx', 'txt', 'rtf', 'odt', 'pages'];
+  return hasFileExtension(filename, documentExtensions);
+};
 
 /**
- * Build file path from components
- * @param {Object} components - Path components
- * @returns {string} Constructed file path
+ * Check if file is a spreadsheet
+ * @param {string} filename - Filename to check
+ * @returns {boolean} True if file is a spreadsheet
  */
-function buildFilePath(components = {}) {
-  const { directory = '', filename = '', name = '', extension = '' } = components;
-  
-  if (filename) {
-    return directory + filename;
-  }
-  
-  if (name && extension) {
-    return directory + name + '.' + extension;
-  }
-  
-  return directory + name;
-}
+const isSpreadsheetFile = (filename) => {
+  const spreadsheetExtensions = ['xls', 'xlsx', 'csv', 'ods', 'numbers'];
+  return hasFileExtension(filename, spreadsheetExtensions);
+};
 
 /**
- * Get relative path between two paths
- * @param {string} fromPath - Source path
- * @param {string} toPath - Target path
- * @returns {string} Relative path
+ * Check if file is a presentation
+ * @param {string} filename - Filename to check
+ * @returns {boolean} True if file is a presentation
  */
-function getRelativePath(fromPath, toPath) {
-  const fromParts = fromPath.split(/[/\\]/).filter(Boolean);
-  const toParts = toPath.split(/[/\\]/).filter(Boolean);
-  
-  let commonPrefixLength = 0;
-  for (let i = 0; i < Math.min(fromParts.length, toParts.length); i++) {
-    if (fromParts[i] === toParts[i]) {
-      commonPrefixLength++;
-    } else {
-      break;
-    }
-  }
-  
-  const upLevels = fromParts.length - commonPrefixLength;
-  const relativeParts = toParts.slice(commonPrefixLength);
-  
-  const upPath = '../'.repeat(upLevels);
-  const downPath = relativeParts.join('/');
-  
-  return upPath + downPath;
-}
+const isPresentationFile = (filename) => {
+  const presentationExtensions = ['ppt', 'pptx', 'odp', 'key'];
+  return hasFileExtension(filename, presentationExtensions);
+};
 
 /**
- * Normalize file path (resolve . and ..)
- * @param {string} filePath - File path to normalize
- * @returns {string} Normalized path
+ * Check if file is an archive
+ * @param {string} filename - Filename to check
+ * @returns {boolean} True if file is an archive
  */
-function normalizePath(filePath) {
-  if (!filePath || typeof filePath !== 'string') return '';
-  
-  const parts = filePath.split(/[/\\]/);
-  const normalized = [];
-  
-  for (const part of parts) {
-    if (part === '.' || part === '') continue;
-    if (part === '..') {
-      if (normalized.length > 0) {
-        normalized.pop();
-      }
-    } else {
-      normalized.push(part);
-    }
-  }
-  
-  return normalized.join('/');
-}
+const isArchiveFile = (filename) => {
+  const archiveExtensions = ['zip', 'rar', '7z', 'tar', 'gz', 'bz2', 'xz'];
+  return hasFileExtension(filename, archiveExtensions);
+};
 
 /**
- * File upload validator
- * @param {File} file - File object
- * @param {Object} options - Validation options
- * @returns {Object} Validation result
+ * Check if file is executable
+ * @param {string} filename - Filename to check
+ * @returns {boolean} True if file is executable
  */
-function validateFileUpload(file, options = {}) {
-  const {
-    maxSize = 10 * 1024 * 1024, // 10MB
-    allowedTypes = [],
-    allowedExtensions = [],
-    maxFileNameLength = 255
-  } = options;
+const isExecutableFile = (filename) => {
+  const executableExtensions = ['exe', 'msi', 'app', 'dmg', 'deb', 'rpm', 'sh', 'bat'];
+  return hasFileExtension(filename, executableExtensions);
+};
+
+/**
+ * Get file type category
+ * @param {string} filename - Filename to get type for
+ * @returns {string} File type category
+ */
+const getFileType = (filename) => {
+  if (isImageFile(filename)) return 'image';
+  if (isVideoFile(filename)) return 'video';
+  if (isAudioFile(filename)) return 'audio';
+  if (isDocumentFile(filename)) return 'document';
+  if (isSpreadsheetFile(filename)) return 'spreadsheet';
+  if (isPresentationFile(filename)) return 'presentation';
+  if (isArchiveFile(filename)) return 'archive';
+  if (isExecutableFile(filename)) return 'executable';
+  return 'unknown';
+};
+
+/**
+ * Get file icon based on type
+ * @param {string} filename - Filename to get icon for
+ * @returns {string} File icon name
+ */
+const getFileIcon = (filename) => {
+  const fileType = getFileType(filename);
   
+  const icons = {
+    'image': '🖼️',
+    'video': '🎥',
+    'audio': '🎵',
+    'document': '📄',
+    'spreadsheet': '📊',
+    'presentation': '📽️',
+    'archive': '📦',
+    'executable': '⚙️',
+    'unknown': '📁'
+  };
+  
+  return icons[fileType] || icons.unknown;
+};
+
+/**
+ * Validate filename
+ * @param {string} filename - Filename to validate
+ * @returns {Object} Validation result with isValid and errors
+ */
+const validateFilename = (filename) => {
   const errors = [];
   
-  // Check file size
-  if (file.size > maxSize) {
-    errors.push(`File size exceeds maximum allowed size of ${formatFileSize(maxSize)}`);
+  if (!filename || typeof filename !== 'string') {
+    errors.push('Filename is required');
+    return { isValid: false, errors };
   }
   
-  // Check file type
-  if (allowedTypes.length > 0 && !allowedTypes.includes(file.type)) {
-    errors.push(`File type ${file.type} is not allowed`);
+  if (filename.length === 0) {
+    errors.push('Filename cannot be empty');
   }
   
-  // Check file extension
-  if (allowedExtensions.length > 0 && !isValidFileType(file.name, allowedExtensions)) {
-    errors.push(`File extension is not allowed`);
+  if (filename.length > 255) {
+    errors.push('Filename is too long (max 255 characters)');
   }
   
-  // Check filename length
-  if (file.name.length > maxFileNameLength) {
-    errors.push(`Filename is too long (max ${maxFileNameLength} characters)`);
-  }
-  
-  // Check for invalid characters in filename
-  const sanitized = sanitizeFilename(file.name);
-  if (sanitized !== file.name) {
+  // Check for invalid characters
+  const invalidChars = /[<>:"/\\|?*]/;
+  if (invalidChars.test(filename)) {
     errors.push('Filename contains invalid characters');
+  }
+  
+  // Check for reserved names (Windows)
+  const reservedNames = ['CON', 'PRN', 'AUX', 'NUL', 'COM1', 'COM2', 'COM3', 'COM4', 'COM5', 'COM6', 'COM7', 'COM8', 'COM9', 'LPT1', 'LPT2', 'LPT3', 'LPT4', 'LPT5', 'LPT6', 'LPT7', 'LPT8', 'LPT9'];
+  if (reservedNames.includes(filename.toUpperCase())) {
+    errors.push('Filename is a reserved name');
   }
   
   return {
     isValid: errors.length === 0,
-    errors,
-    fileSize: formatFileSize(file.size),
-    mimeType: file.type,
-    extension: getFileExtension(file.name)
+    errors
   };
-}
+};
+
+/**
+ * Sanitize filename
+ * @param {string} filename - Filename to sanitize
+ * @param {Object} options - Sanitization options
+ * @returns {string} Sanitized filename
+ */
+const sanitizeFilename = (filename, options = {}) => {
+  if (!filename || typeof filename !== 'string') return '';
+  
+  const {
+    replaceSpaces = true,
+    replaceDots = false,
+    maxLength = 255,
+    replacement = '_'
+  } = options;
+  
+  let sanitized = filename;
+  
+  // Replace invalid characters
+  sanitized = sanitized.replace(/[<>:"/\\|?*]/g, replacement);
+  
+  // Replace spaces
+  if (replaceSpaces) {
+    sanitized = sanitized.replace(/\s+/g, replacement);
+  }
+  
+  // Replace multiple dots (except for file extension)
+  if (replaceDots) {
+    const lastDotIndex = sanitized.lastIndexOf('.');
+    if (lastDotIndex > 0) {
+      const name = sanitized.substring(0, lastDotIndex).replace(/\.+/g, replacement);
+      const ext = sanitized.substring(lastDotIndex);
+      sanitized = name + ext;
+    } else {
+      sanitized = sanitized.replace(/\.+/g, replacement);
+    }
+  }
+  
+  // Remove leading/trailing dots and spaces
+  sanitized = sanitized.replace(/^[.\s]+|[.\s]+$/g, '');
+  
+  // Truncate if too long
+  if (sanitized.length > maxLength) {
+    const lastDotIndex = sanitized.lastIndexOf('.');
+    if (lastDotIndex > 0) {
+      const name = sanitized.substring(0, lastDotIndex);
+      const ext = sanitized.substring(lastDotIndex);
+      const maxNameLength = maxLength - ext.length;
+      sanitized = name.substring(0, maxNameLength) + ext;
+    } else {
+      sanitized = sanitized.substring(0, maxLength);
+    }
+  }
+  
+  return sanitized || 'untitled';
+};
+
+/**
+ * Generate unique filename
+ * @param {string} filename - Base filename
+ * @param {Array} existingFiles - Array of existing filenames
+ * @returns {string} Unique filename
+ */
+const generateUniqueFilename = (filename, existingFiles = []) => {
+  if (!existingFiles.includes(filename)) return filename;
+  
+  const name = getFilenameWithoutExtension(filename);
+  const ext = getFileExtension(filename);
+  const extension = ext ? `.${ext}` : '';
+  
+  let counter = 1;
+  let uniqueName = `${name}_${counter}${extension}`;
+  
+  while (existingFiles.includes(uniqueName)) {
+    counter++;
+    uniqueName = `${name}_${counter}${extension}`;
+  }
+  
+  return uniqueName;
+};
+
+/**
+ * Get file path components
+ * @param {string} filepath - File path to parse
+ * @returns {Object} Path components
+ */
+const parseFilePath = (filepath) => {
+  if (!filepath || typeof filepath !== 'string') {
+    return { dirname: '', basename: '', filename: '', extension: '' };
+  }
+  
+  const lastSlashIndex = filepath.lastIndexOf('/');
+  const lastBackslashIndex = filepath.lastIndexOf('\\');
+  const lastSeparatorIndex = Math.max(lastSlashIndex, lastBackslashIndex);
+  
+  const dirname = lastSeparatorIndex > 0 ? filepath.substring(0, lastSeparatorIndex) : '';
+  const basename = lastSeparatorIndex >= 0 ? filepath.substring(lastSeparatorIndex + 1) : filepath;
+  const filename = getFilenameWithoutExtension(basename);
+  const extension = getFileExtension(basename);
+  
+  return {
+    dirname,
+    basename,
+    filename,
+    extension: extension ? `.${extension}` : ''
+  };
+};
+
+/**
+ * Join path components
+ * @param {...string} parts - Path parts to join
+ * @returns {string} Joined path
+ */
+const joinPath = (...parts) => {
+  return parts
+    .filter(part => part && typeof part === 'string')
+    .join('/')
+    .replace(/\/+/g, '/')
+    .replace(/\/$/, '');
+};
+
+/**
+ * Normalize file path
+ * @param {string} filepath - File path to normalize
+ * @returns {string} Normalized path
+ */
+const normalizePath = (filepath) => {
+  if (!filepath || typeof filepath !== 'string') return '';
+  
+  // Replace backslashes with forward slashes
+  let normalized = filepath.replace(/\\/g, '/');
+  
+  // Remove duplicate slashes
+  normalized = normalized.replace(/\/+/g, '/');
+  
+  // Remove trailing slash (except for root)
+  if (normalized.length > 1 && normalized.endsWith('/')) {
+    normalized = normalized.slice(0, -1);
+  }
+  
+  return normalized;
+};
 
 module.exports = {
   getFileExtension,
-  getFileNameWithoutExtension,
+  getFilenameWithoutExtension,
+  hasFileExtension,
   formatFileSize,
-  isValidFileType,
-  isValidFileSize,
-  generateUniqueFilename,
+  parseFileSize,
+  isImageFile,
+  isVideoFile,
+  isAudioFile,
+  isDocumentFile,
+  isSpreadsheetFile,
+  isPresentationFile,
+  isArchiveFile,
+  isExecutableFile,
+  getFileType,
+  getFileIcon,
+  validateFilename,
   sanitizeFilename,
-  getMimeType,
-  isImage,
-  isDocument,
-  isVideo,
-  isAudio,
+  generateUniqueFilename,
   parseFilePath,
-  buildFilePath,
-  getRelativePath,
-  normalizePath,
-  validateFileUpload
+  joinPath,
+  normalizePath
 };
