@@ -3,55 +3,41 @@
  */
 
 /**
- * Validate email format
+ * Validate email address
  * @param {string} email - Email to validate
- * @returns {boolean} True if valid email
+ * @returns {boolean} True if email is valid
  */
 const isValidEmail = (email) => {
+  if (!email || typeof email !== 'string') return false;
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
 };
 
 /**
- * Validate phone number format
+ * Validate phone number
  * @param {string} phone - Phone number to validate
- * @returns {boolean} True if valid phone
+ * @param {string} format - Phone format ('us', 'international', 'any')
+ * @returns {boolean} True if phone is valid
  */
-const isValidPhone = (phone) => {
-  const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
-  return phoneRegex.test(phone.replace(/[\s\-\(\)]/g, ''));
-};
-
-/**
- * Validate password strength
- * @param {string} password - Password to validate
- * @returns {Object} Validation result
- */
-const validatePassword = (password) => {
-  const minLength = 8;
-  const hasUpperCase = /[A-Z]/.test(password);
-  const hasLowerCase = /[a-z]/.test(password);
-  const hasNumbers = /\d/.test(password);
-  const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
-  const isLongEnough = password.length >= minLength;
-
-  return {
-    isValid: isLongEnough && hasUpperCase && hasLowerCase && hasNumbers && hasSpecialChar,
-    isLongEnough,
-    hasUpperCase,
-    hasLowerCase,
-    hasNumbers,
-    hasSpecialChar,
-    strength: [isLongEnough, hasUpperCase, hasLowerCase, hasNumbers, hasSpecialChar].filter(Boolean).length
+const isValidPhone = (phone, format = 'any') => {
+  if (!phone || typeof phone !== 'string') return false;
+  
+  const phoneRegex = {
+    us: /^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$/,
+    international: /^\+?[1-9]\d{1,14}$/,
+    any: /^[\+]?[1-9][\d]{0,15}$/
   };
+  
+  return phoneRegex[format].test(phone.replace(/\s/g, ''));
 };
 
 /**
- * Validate URL format
+ * Validate URL
  * @param {string} url - URL to validate
- * @returns {boolean} True if valid URL
+ * @returns {boolean} True if URL is valid
  */
 const isValidUrl = (url) => {
+  if (!url || typeof url !== 'string') return false;
   try {
     new URL(url);
     return true;
@@ -61,168 +47,447 @@ const isValidUrl = (url) => {
 };
 
 /**
- * Validate credit card number (Luhn algorithm)
- * @param {string} cardNumber - Card number to validate
- * @returns {boolean} True if valid card number
+ * Validate password strength
+ * @param {string} password - Password to validate
+ * @param {Object} options - Validation options
+ * @returns {Object} Validation result with score and feedback
  */
-const isValidCreditCard = (cardNumber) => {
+const validatePassword = (password, options = {}) => {
+  const {
+    minLength = 8,
+    requireUppercase = true,
+    requireLowercase = true,
+    requireNumbers = true,
+    requireSpecialChars = true
+  } = options;
+
+  if (!password || typeof password !== 'string') {
+    return { isValid: false, score: 0, feedback: ['Password is required'] };
+  }
+
+  const feedback = [];
+  let score = 0;
+
+  // Length check
+  if (password.length < minLength) {
+    feedback.push(`Password must be at least ${minLength} characters long`);
+  } else {
+    score += 1;
+  }
+
+  // Uppercase check
+  if (requireUppercase && !/[A-Z]/.test(password)) {
+    feedback.push('Password must contain at least one uppercase letter');
+  } else if (requireUppercase) {
+    score += 1;
+  }
+
+  // Lowercase check
+  if (requireLowercase && !/[a-z]/.test(password)) {
+    feedback.push('Password must contain at least one lowercase letter');
+  } else if (requireLowercase) {
+    score += 1;
+  }
+
+  // Numbers check
+  if (requireNumbers && !/\d/.test(password)) {
+    feedback.push('Password must contain at least one number');
+  } else if (requireNumbers) {
+    score += 1;
+  }
+
+  // Special characters check
+  if (requireSpecialChars && !/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+    feedback.push('Password must contain at least one special character');
+  } else if (requireSpecialChars) {
+    score += 1;
+  }
+
+  // Additional length bonus
+  if (password.length >= 12) score += 1;
+  if (password.length >= 16) score += 1;
+
+  const isValid = feedback.length === 0;
+  const strength = score <= 2 ? 'weak' : score <= 4 ? 'medium' : 'strong';
+
+  return {
+    isValid,
+    score,
+    strength,
+    feedback
+  };
+};
+
+/**
+ * Validate credit card number
+ * @param {string} cardNumber - Credit card number to validate
+ * @returns {Object} Validation result with type and validity
+ */
+const validateCreditCard = (cardNumber) => {
+  if (!cardNumber || typeof cardNumber !== 'string') {
+    return { isValid: false, type: 'unknown' };
+  }
+
   const cleanNumber = cardNumber.replace(/\s/g, '');
-  if (!/^\d{13,19}$/.test(cleanNumber)) return false;
-
-  let sum = 0;
-  let isEven = false;
-
-  for (let i = cleanNumber.length - 1; i >= 0; i--) {
-    let digit = parseInt(cleanNumber[i]);
-
-    if (isEven) {
-      digit *= 2;
-      if (digit > 9) {
-        digit -= 9;
-      }
-    }
-
-    sum += digit;
-    isEven = !isEven;
-  }
-
-  return sum % 10 === 0;
-};
-
-/**
- * Validate date format (YYYY-MM-DD)
- * @param {string} date - Date string to validate
- * @returns {boolean} True if valid date
- */
-const isValidDate = (date) => {
-  const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-  if (!dateRegex.test(date)) return false;
   
-  const d = new Date(date);
-  return d instanceof Date && !isNaN(d) && d.toISOString().slice(0, 10) === date;
-};
+  // Luhn algorithm
+  const luhnCheck = (num) => {
+    let sum = 0;
+    let isEven = false;
+    
+    for (let i = num.length - 1; i >= 0; i--) {
+      let digit = parseInt(num[i]);
+      
+      if (isEven) {
+        digit *= 2;
+        if (digit > 9) {
+          digit -= 9;
+        }
+      }
+      
+      sum += digit;
+      isEven = !isEven;
+    }
+    
+    return sum % 10 === 0;
+  };
 
-/**
- * Validate required field
- * @param {*} value - Value to validate
- * @returns {boolean} True if not empty
- */
-const isRequired = (value) => {
-  if (typeof value === 'string') {
-    return value.trim().length > 0;
+  // Card type detection
+  const cardTypes = {
+    visa: /^4[0-9]{12}(?:[0-9]{3})?$/,
+    mastercard: /^5[1-5][0-9]{14}$/,
+    amex: /^3[47][0-9]{13}$/,
+    discover: /^6(?:011|5[0-9]{2})[0-9]{12}$/,
+    diners: /^3[0689][0-9]{12}$/,
+    jcb: /^(?:2131|1800|35\d{3})\d{11}$/
+  };
+
+  let cardType = 'unknown';
+  for (const [type, regex] of Object.entries(cardTypes)) {
+    if (regex.test(cleanNumber)) {
+      cardType = type;
+      break;
+    }
   }
-  return value !== null && value !== undefined;
+
+  const isValid = luhnCheck(cleanNumber) && cardType !== 'unknown';
+
+  return {
+    isValid,
+    type: cardType,
+    formatted: cleanNumber.replace(/(.{4})/g, '$1 ').trim()
+  };
 };
 
 /**
- * Validate minimum length
- * @param {string} value - String to validate
- * @param {number} minLength - Minimum length
- * @returns {boolean} True if meets minimum length
+ * Validate date
+ * @param {string|Date} date - Date to validate
+ * @param {Object} options - Validation options
+ * @returns {boolean} True if date is valid
  */
-const hasMinLength = (value, minLength) => {
-  return value && value.length >= minLength;
-};
-
-/**
- * Validate maximum length
- * @param {string} value - String to validate
- * @param {number} maxLength - Maximum length
- * @returns {boolean} True if within maximum length
- */
-const hasMaxLength = (value, maxLength) => {
-  return value && value.length <= maxLength;
+const isValidDate = (date, options = {}) => {
+  const { minDate, maxDate, format } = options;
+  
+  let dateObj;
+  
+  if (date instanceof Date) {
+    dateObj = date;
+  } else if (typeof date === 'string') {
+    dateObj = new Date(date);
+  } else {
+    return false;
+  }
+  
+  if (isNaN(dateObj.getTime())) return false;
+  
+  if (minDate) {
+    const min = new Date(minDate);
+    if (dateObj < min) return false;
+  }
+  
+  if (maxDate) {
+    const max = new Date(maxDate);
+    if (dateObj > max) return false;
+  }
+  
+  return true;
 };
 
 /**
  * Validate number range
  * @param {number} value - Number to validate
- * @param {number} min - Minimum value
- * @param {number} max - Maximum value
- * @returns {boolean} True if within range
+ * @param {Object} options - Validation options
+ * @returns {boolean} True if number is in valid range
  */
-const isInRange = (value, min, max) => {
-  return value >= min && value <= max;
+const isValidNumber = (value, options = {}) => {
+  const { min, max, integer = false, positive = false } = options;
+  
+  if (typeof value !== 'number' || isNaN(value)) return false;
+  
+  if (integer && !Number.isInteger(value)) return false;
+  
+  if (positive && value <= 0) return false;
+  
+  if (min !== undefined && value < min) return false;
+  
+  if (max !== undefined && value > max) return false;
+  
+  return true;
 };
 
 /**
- * Validate object schema
- * @param {Object} data - Data to validate
- * @param {Object} schema - Validation schema
+ * Validate string length
+ * @param {string} str - String to validate
+ * @param {Object} options - Validation options
+ * @returns {boolean} True if string length is valid
+ */
+const isValidLength = (str, options = {}) => {
+  const { min = 0, max = Infinity, exact } = options;
+  
+  if (typeof str !== 'string') return false;
+  
+  if (exact !== undefined) {
+    return str.length === exact;
+  }
+  
+  return str.length >= min && str.length <= max;
+};
+
+/**
+ * Validate alphanumeric string
+ * @param {string} str - String to validate
+ * @param {Object} options - Validation options
+ * @returns {boolean} True if string is alphanumeric
+ */
+const isAlphanumeric = (str, options = {}) => {
+  const { allowSpaces = false, allowSpecialChars = false } = options;
+  
+  if (typeof str !== 'string') return false;
+  
+  let pattern = '^[a-zA-Z0-9';
+  if (allowSpaces) pattern += ' ';
+  if (allowSpecialChars) pattern += '\\w\\s';
+  pattern += ']+$';
+  
+  const regex = new RegExp(pattern);
+  return regex.test(str);
+};
+
+/**
+ * Validate IP address
+ * @param {string} ip - IP address to validate
+ * @param {string} version - IP version ('v4', 'v6', 'any')
+ * @returns {boolean} True if IP is valid
+ */
+const isValidIP = (ip, version = 'any') => {
+  if (!ip || typeof ip !== 'string') return false;
+  
+  const ipv4Regex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+  const ipv6Regex = /^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$/;
+  
+  switch (version) {
+    case 'v4':
+      return ipv4Regex.test(ip);
+    case 'v6':
+      return ipv6Regex.test(ip);
+    case 'any':
+    default:
+      return ipv4Regex.test(ip) || ipv6Regex.test(ip);
+  }
+};
+
+/**
+ * Validate JSON string
+ * @param {string} json - JSON string to validate
+ * @returns {boolean} True if JSON is valid
+ */
+const isValidJSON = (json) => {
+  if (!json || typeof json !== 'string') return false;
+  
+  try {
+    JSON.parse(json);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * Validate hex color
+ * @param {string} color - Hex color to validate
+ * @returns {boolean} True if hex color is valid
+ */
+const isValidHexColor = (color) => {
+  if (!color || typeof color !== 'string') return false;
+  const hexRegex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
+  return hexRegex.test(color);
+};
+
+/**
+ * Validate UUID
+ * @param {string} uuid - UUID to validate
+ * @param {string} version - UUID version ('v1', 'v4', 'any')
+ * @returns {boolean} True if UUID is valid
+ */
+const isValidUUID = (uuid, version = 'any') => {
+  if (!uuid || typeof uuid !== 'string') return false;
+  
+  const uuidRegex = {
+    v1: /^[0-9a-f]{8}-[0-9a-f]{4}-1[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+    v4: /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+    any: /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+  };
+  
+  return uuidRegex[version].test(uuid);
+};
+
+/**
+ * Validate MongoDB ObjectId
+ * @param {string} id - ObjectId to validate
+ * @returns {boolean} True if ObjectId is valid
+ */
+const isValidObjectId = (id) => {
+  if (!id || typeof id !== 'string') return false;
+  const objectIdRegex = /^[0-9a-fA-F]{24}$/;
+  return objectIdRegex.test(id);
+};
+
+/**
+ * Validate JWT token
+ * @param {string} token - JWT token to validate
+ * @returns {boolean} True if JWT format is valid
+ */
+const isValidJWT = (token) => {
+  if (!token || typeof token !== 'string') return false;
+  
+  const parts = token.split('.');
+  if (parts.length !== 3) return false;
+  
+  // Check if each part is base64 encoded
+  try {
+    parts.forEach(part => {
+      Buffer.from(part, 'base64url').toString('base64url');
+    });
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * Validate file extension
+ * @param {string} filename - Filename to validate
+ * @param {Array} allowedExtensions - Allowed file extensions
+ * @returns {boolean} True if file extension is allowed
+ */
+const isValidFileExtension = (filename, allowedExtensions = []) => {
+  if (!filename || typeof filename !== 'string') return false;
+  if (allowedExtensions.length === 0) return true;
+  
+  const extension = filename.split('.').pop().toLowerCase();
+  return allowedExtensions.includes(extension);
+};
+
+/**
+ * Validate file size
+ * @param {number} fileSize - File size in bytes
+ * @param {number} maxSize - Maximum file size in bytes
+ * @returns {boolean} True if file size is valid
+ */
+const isValidFileSize = (fileSize, maxSize) => {
+  if (typeof fileSize !== 'number' || isNaN(fileSize)) return false;
+  if (typeof maxSize !== 'number' || isNaN(maxSize)) return false;
+  
+  return fileSize <= maxSize;
+};
+
+/**
+ * Validate form data
+ * @param {Object} data - Form data to validate
+ * @param {Object} rules - Validation rules
  * @returns {Object} Validation result
  */
-const validateSchema = (data, schema) => {
+const validateForm = (data, rules) => {
   const errors = {};
   let isValid = true;
-
-  for (const [field, rules] of Object.entries(schema)) {
+  
+  for (const [field, fieldRules] of Object.entries(rules)) {
     const value = data[field];
     const fieldErrors = [];
-
-    // Required validation
-    if (rules.required && !isRequired(value)) {
-      fieldErrors.push(`${field} is required`);
-    }
-
-    // Type validation
-    if (rules.type && value !== undefined) {
-      if (rules.type === 'string' && typeof value !== 'string') {
-        fieldErrors.push(`${field} must be a string`);
-      } else if (rules.type === 'number' && typeof value !== 'number') {
-        fieldErrors.push(`${field} must be a number`);
-      } else if (rules.type === 'boolean' && typeof value !== 'boolean') {
-        fieldErrors.push(`${field} must be a boolean`);
-      } else if (rules.type === 'array' && !Array.isArray(value)) {
-        fieldErrors.push(`${field} must be an array`);
-      } else if (rules.type === 'object' && (typeof value !== 'object' || Array.isArray(value))) {
-        fieldErrors.push(`${field} must be an object`);
+    
+    for (const rule of fieldRules) {
+      const { type, message, ...options } = rule;
+      
+      let result = false;
+      
+      switch (type) {
+        case 'required':
+          result = value !== undefined && value !== null && value !== '';
+          break;
+        case 'email':
+          result = isValidEmail(value);
+          break;
+        case 'phone':
+          result = isValidPhone(value, options.format);
+          break;
+        case 'url':
+          result = isValidUrl(value);
+          break;
+        case 'password':
+          result = validatePassword(value, options).isValid;
+          break;
+        case 'date':
+          result = isValidDate(value, options);
+          break;
+        case 'number':
+          result = isValidNumber(value, options);
+          break;
+        case 'length':
+          result = isValidLength(value, options);
+          break;
+        case 'alphanumeric':
+          result = isAlphanumeric(value, options);
+          break;
+        case 'ip':
+          result = isValidIP(value, options.version);
+          break;
+        case 'json':
+          result = isValidJSON(value);
+          break;
+        case 'hexColor':
+          result = isValidHexColor(value);
+          break;
+        case 'uuid':
+          result = isValidUUID(value, options.version);
+          break;
+        case 'objectId':
+          result = isValidObjectId(value);
+          break;
+        case 'jwt':
+          result = isValidJWT(value);
+          break;
+        case 'fileExtension':
+          result = isValidFileExtension(value, options.allowedExtensions);
+          break;
+        case 'fileSize':
+          result = isValidFileSize(value, options.maxSize);
+          break;
+        case 'custom':
+          result = options.validator ? options.validator(value) : false;
+          break;
+      }
+      
+      if (!result) {
+        fieldErrors.push(message || `${field} is invalid`);
+        isValid = false;
       }
     }
-
-    // Email validation
-    if (rules.email && value && !isValidEmail(value)) {
-      fieldErrors.push(`${field} must be a valid email`);
-    }
-
-    // Phone validation
-    if (rules.phone && value && !isValidPhone(value)) {
-      fieldErrors.push(`${field} must be a valid phone number`);
-    }
-
-    // URL validation
-    if (rules.url && value && !isValidUrl(value)) {
-      fieldErrors.push(`${field} must be a valid URL`);
-    }
-
-    // Min length validation
-    if (rules.minLength && !hasMinLength(value, rules.minLength)) {
-      fieldErrors.push(`${field} must be at least ${rules.minLength} characters`);
-    }
-
-    // Max length validation
-    if (rules.maxLength && !hasMaxLength(value, rules.maxLength)) {
-      fieldErrors.push(`${field} must be no more than ${rules.maxLength} characters`);
-    }
-
-    // Range validation
-    if (rules.range && !isInRange(value, rules.range.min, rules.range.max)) {
-      fieldErrors.push(`${field} must be between ${rules.range.min} and ${rules.range.max}`);
-    }
-
-    // Custom validation
-    if (rules.custom && typeof rules.custom === 'function') {
-      const customError = rules.custom(value, data);
-      if (customError) {
-        fieldErrors.push(customError);
-      }
-    }
-
+    
     if (fieldErrors.length > 0) {
       errors[field] = fieldErrors;
-      isValid = false;
     }
   }
-
+  
   return {
     isValid,
     errors
@@ -231,58 +496,83 @@ const validateSchema = (data, schema) => {
 
 /**
  * Sanitize input string
- * @param {string} input - Input to sanitize
+ * @param {string} input - Input string to sanitize
+ * @param {Object} options - Sanitization options
  * @returns {string} Sanitized string
  */
-const sanitizeString = (input) => {
-  if (typeof input !== 'string') return input;
-  return input
-    .trim()
-    .replace(/[<>]/g, '') // Remove potential HTML tags
-    .replace(/[&]/g, '&amp;') // Escape ampersands
-    .replace(/["]/g, '&quot;') // Escape quotes
-    .replace(/[']/g, '&#x27;'); // Escape apostrophes
+const sanitizeInput = (input, options = {}) => {
+  const {
+    trim = true,
+    removeHtml = true,
+    removeScripts = true,
+    maxLength = Infinity,
+    allowHtml = false
+  } = options;
+  
+  if (!input || typeof input !== 'string') return '';
+  
+  let sanitized = input;
+  
+  if (trim) {
+    sanitized = sanitized.trim();
+  }
+  
+  if (removeScripts) {
+    sanitized = sanitized.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+  }
+  
+  if (removeHtml && !allowHtml) {
+    sanitized = sanitized.replace(/<[^>]*>/g, '');
+  }
+  
+  if (maxLength !== Infinity && sanitized.length > maxLength) {
+    sanitized = sanitized.substring(0, maxLength);
+  }
+  
+  return sanitized;
 };
 
 /**
- * Validate and sanitize form data
- * @param {Object} formData - Form data to validate
- * @param {Object} schema - Validation schema
- * @returns {Object} Validation and sanitization result
+ * Validate and sanitize input
+ * @param {string} input - Input to validate and sanitize
+ * @param {Object} options - Validation and sanitization options
+ * @returns {Object} Result with validation and sanitized value
  */
-const validateAndSanitize = (formData, schema) => {
-  const sanitizedData = {};
+const validateAndSanitize = (input, options = {}) => {
+  const {
+    validation = {},
+    sanitization = {}
+  } = options;
   
-  // Sanitize all string fields
-  for (const [field, value] of Object.entries(formData)) {
-    if (typeof value === 'string') {
-      sanitizedData[field] = sanitizeString(value);
-    } else {
-      sanitizedData[field] = value;
-    }
-  }
-
-  // Validate sanitized data
-  const validation = validateSchema(sanitizedData, schema);
-
+  const sanitized = sanitizeInput(input, sanitization);
+  const validationResult = validateForm({ input: sanitized }, { input: validation });
+  
   return {
-    ...validation,
-    data: sanitizedData
+    isValid: validationResult.isValid,
+    errors: validationResult.errors.input || [],
+    sanitized
   };
 };
 
 module.exports = {
   isValidEmail,
   isValidPhone,
-  validatePassword,
   isValidUrl,
-  isValidCreditCard,
+  validatePassword,
+  validateCreditCard,
   isValidDate,
-  isRequired,
-  hasMinLength,
-  hasMaxLength,
-  isInRange,
-  validateSchema,
-  sanitizeString,
+  isValidNumber,
+  isValidLength,
+  isAlphanumeric,
+  isValidIP,
+  isValidJSON,
+  isValidHexColor,
+  isValidUUID,
+  isValidObjectId,
+  isValidJWT,
+  isValidFileExtension,
+  isValidFileSize,
+  validateForm,
+  sanitizeInput,
   validateAndSanitize
 };
