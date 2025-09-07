@@ -84,7 +84,24 @@ function createLogger(options = {}) {
     groupEnd: () => console.groupEnd(),
     
     // Table logging
-    table: (data) => console.table(data)
+    table: (data) => console.table(data),
+    
+    // Structured logging
+    log: (level, message, metadata = {}) => {
+      const logEntry = {
+        timestamp: new Date().toISOString(),
+        level: level.toUpperCase(),
+        message,
+        ...metadata
+      };
+      console.log(JSON.stringify(logEntry));
+    },
+    
+    // Success logging
+    success: (message, data) => log('info', `✅ ${message}`, data),
+    
+    // Failure logging
+    failure: (message, data) => log('error', `❌ ${message}`, data)
   };
 }
 
