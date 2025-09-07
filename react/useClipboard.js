@@ -57,12 +57,46 @@ const useClipboard = (initialText = '') => {
     }
   }, []);
 
+  const clearClipboard = useCallback(async () => {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText('');
+        setText('');
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Failed to clear clipboard:', error);
+      return false;
+    }
+  }, []);
+
+  const copyImageToClipboard = useCallback(async (imageBlob) => {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        const clipboardItem = new ClipboardItem({
+          'image/png': imageBlob
+        });
+        await navigator.clipboard.write([clipboardItem]);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Failed to copy image:', error);
+      return false;
+    }
+  }, []);
+
   return {
     copied,
     text,
     setText,
     copyToClipboard,
-    readFromClipboard
+    readFromClipboard,
+    clearClipboard,
+    copyImageToClipboard
   };
 };
 
