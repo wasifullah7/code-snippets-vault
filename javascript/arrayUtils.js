@@ -673,6 +673,50 @@ const arrayUtils = {
   difference(array1, array2) {
     const set2 = new Set(array2);
     return array1.filter(item => !set2.has(item));
+  },
+
+  /**
+   * Zip two arrays together
+   * @param {Array} array1 - First array
+   * @param {Array} array2 - Second array
+   * @returns {Array} Zipped array
+   */
+  zip(array1, array2) {
+    const minLength = Math.min(array1.length, array2.length);
+    return Array.from({ length: minLength }, (_, i) => [array1[i], array2[i]]);
+  },
+
+  /**
+   * Unzip array of pairs
+   * @param {Array} zippedArray - Array of pairs
+   * @returns {Array} Array containing two arrays
+   */
+  unzip(zippedArray) {
+    if (zippedArray.length === 0) return [[], []];
+    return zippedArray.reduce(
+      (acc, [first, second]) => {
+        acc[0].push(first);
+        acc[1].push(second);
+        return acc;
+      },
+      [[], []]
+    );
+  },
+
+  /**
+   * Partition array based on predicate
+   * @param {Array} array - Array to partition
+   * @param {Function} predicate - Partition function
+   * @returns {Array} Array containing [trueArray, falseArray]
+   */
+  partition(array, predicate) {
+    return array.reduce(
+      (acc, item) => {
+        acc[predicate(item) ? 0 : 1].push(item);
+        return acc;
+      },
+      [[], []]
+    );
   }
 };
 
