@@ -4,6 +4,26 @@
  */
 
 /**
+ * Check if string is empty or whitespace
+ * @param {string} str - String to check
+ * @returns {boolean} True if string is empty or whitespace
+ */
+function isEmpty(str) {
+  return !str || str.trim().length === 0;
+}
+
+/**
+ * Check if string is palindrome
+ * @param {string} str - String to check
+ * @returns {boolean} True if string is palindrome
+ */
+function isPalindrome(str) {
+  if (!str) return false;
+  const cleaned = str.toLowerCase().replace(/[^a-z0-9]/g, '');
+  return cleaned === cleaned.split('').reverse().join('');
+}
+
+/**
  * Convert string to title case
  * @param {string} str - String to convert
  * @param {Array} exceptions - Words to keep lowercase
