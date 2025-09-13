@@ -1,33 +1,21 @@
 /**
- * Network utility functions for network operations and monitoring
+ * Network and HTTP utility functions
  */
 
 /**
  * Check if device is online
- * @returns {boolean} True if device is online
+ * @returns {boolean} Online status
  */
-const isOnline = () => {
-  if (typeof navigator === 'undefined') return false;
+export const isOnline = () => {
   return navigator.onLine;
 };
 
 /**
- * Get network information
- * @returns {Object} Network information
+ * Get network connection information
+ * @returns {Object} Connection info
  */
-const getNetworkInfo = () => {
-  if (typeof navigator === 'undefined') {
-    return {
-      effectiveType: 'unknown',
-      downlink: 0,
-      rtt: 0,
-      saveData: false
-    };
-  }
-  
-  const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-  
-  if (!connection) {
+export const getConnectionInfo = () => {
+  if (!navigator.connection) {
     return {
       effectiveType: 'unknown',
       downlink: 0,
@@ -37,51 +25,64 @@ const getNetworkInfo = () => {
   }
   
   return {
-    effectiveType: connection.effectiveType || 'unknown',
-    downlink: connection.downlink || 0,
-    rtt: connection.rtt || 0,
-    saveData: connection.saveData || false
+    effectiveType: navigator.connection.effectiveType,
+    downlink: navigator.connection.downlink,
+    rtt: navigator.connection.rtt,
+    saveData: navigator.connection.saveData
   };
 };
 
 /**
- * Make HTTP request
- * @param {string} url - URL to request
- * @param {Object} options - Request options
- * @returns {Promise} Response promise
+ * Simple fetch wrapper with timeout
+ * @param {string} url - Request URL
+ * @param {Object} options - Fetch options
+ * @param {number} timeout - Timeout in milliseconds
+ * @returns {Promise<Response>} Fetch response
  */
-const makeRequest = async (url, options = {}) => {
-  const {
-    method = 'GET',
-    headers = {},
-    body = null,
-    timeout = 10000
-  } = options;
-  
+export const fetchWithTimeout = async (url, options = {}, timeout = 10000) => {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeout);
   
   try {
     const response = await fetch(url, {
-      method,
-      headers: {
-        'Content-Type': 'application/json',
-        ...headers
-      },
-      body: body ? JSON.stringify(body) : null,
+      ...options,
       signal: controller.signal
     });
-    
     clearTimeout(timeoutId);
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
-    return await response.json();
+    return response;
   } catch (error) {
     clearTimeout(timeoutId);
+    if (error.name === 'AbortError') {
+      throw new Error('Request timeout');
+    }
     throw error;
+  }
+};
+
+/**
+ * Retry fetch with exponential backoff
+ * @param {string} url - Request URL
+ * @param {Object} options - Fetch options
+ * @param {number} maxRetries - Maximum retry attempts
+ * @param {number} baseDelay - Base delay in milliseconds
+ * @returns {Promise<Response>} Fetch response
+ */
+export const fetchWithRetry = async (url, options = {}, maxRetries = 3, baseDelay = 1000) => {
+  let lastError;
+  
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fetch(url, options);
+    } catch (error) {
+      lastError = error;
+      
+      if (attempt === maxRetries) {
+        throw lastError;
+      }
+      
+      const delay = baseDelay * Math.pow(2, attempt);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
   }
 };
 
@@ -89,52 +90,48 @@ const makeRequest = async (url, options = {}) => {
  * Download file from URL
  * @param {string} url - File URL
  * @param {string} filename - Download filename
+ * @returns {Promise<void>}
  */
-const downloadFile = (url, filename) => {
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+export const downloadFile = async (url, filename) => {
+  try {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(link.href);
+  } catch (error) {
+    throw new Error(`Failed to download file: ${error.message}`);
+  }
 };
 
 /**
- * Upload file
- * @param {string} url - Upload endpoint
+ * Upload file with progress tracking
  * @param {File} file - File to upload
+ * @param {string} url - Upload endpoint
+ * @param {Function} onProgress - Progress callback
  * @param {Object} options - Upload options
- * @returns {Promise} Upload promise
+ * @returns {Promise<Response>} Upload response
  */
-const uploadFile = async (url, file, options = {}) => {
-  const {
-    onProgress = null,
-    headers = {}
-  } = options;
-  
-  const formData = new FormData();
-  formData.append('file', file);
-  
+export const uploadFile = async (file, url, onProgress, options = {}) => {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     
-    if (onProgress) {
-      xhr.upload.addEventListener('progress', (event) => {
-        if (event.lengthComputable) {
-          const percentComplete = (event.loaded / event.total) * 100;
-          onProgress(percentComplete);
-        }
-      });
-    }
+    // Progress tracking
+    xhr.upload.addEventListener('progress', (event) => {
+      if (event.lengthComputable && onProgress) {
+        const progress = (event.loaded / event.total) * 100;
+        onProgress(progress);
+      }
+    });
     
     xhr.addEventListener('load', () => {
       if (xhr.status >= 200 && xhr.status < 300) {
-        try {
-          const response = JSON.parse(xhr.responseText);
-          resolve(response);
-        } catch {
-          resolve(xhr.responseText);
-        }
+        resolve(xhr.response);
       } else {
         reject(new Error(`Upload failed: ${xhr.status}`));
       }
@@ -144,33 +141,84 @@ const uploadFile = async (url, file, options = {}) => {
       reject(new Error('Upload failed'));
     });
     
-    xhr.open('POST', url);
+    // Setup request
+    const formData = new FormData();
+    formData.append(options.fieldName || 'file', file);
     
-    Object.entries(headers).forEach(([key, value]) => {
-      xhr.setRequestHeader(key, value);
-    });
+    // Add additional fields
+    if (options.fields) {
+      Object.entries(options.fields).forEach(([key, value]) => {
+        formData.append(key, value);
+      });
+    }
+    
+    xhr.open(options.method || 'POST', url);
+    
+    // Add headers (except Content-Type for FormData)
+    if (options.headers) {
+      Object.entries(options.headers).forEach(([key, value]) => {
+        if (key.toLowerCase() !== 'content-type') {
+          xhr.setRequestHeader(key, value);
+        }
+      });
+    }
     
     xhr.send(formData);
   });
 };
 
 /**
+ * Ping URL to check availability
+ * @param {string} url - URL to ping
+ * @param {number} timeout - Timeout in milliseconds
+ * @returns {Promise<Object>} Ping result
+ */
+export const pingUrl = async (url, timeout = 5000) => {
+  const startTime = performance.now();
+  
+  try {
+    const response = await fetchWithTimeout(url, { method: 'HEAD' }, timeout);
+    const endTime = performance.now();
+    
+    return {
+      success: response.ok,
+      status: response.status,
+      latency: Math.round(endTime - startTime),
+      url
+    };
+  } catch (error) {
+    return {
+      success: false,
+      status: 0,
+      latency: 0,
+      url,
+      error: error.message
+    };
+  }
+};
+
+/**
+ * Get user's public IP address
+ * @returns {Promise<string>} Public IP address
+ */
+export const getPublicIP = async () => {
+  try {
+    const response = await fetch('https://api.ipify.org?format=json');
+    const data = await response.json();
+    return data.ip;
+  } catch (error) {
+    throw new Error('Failed to get public IP');
+  }
+};
+
+/**
  * Check if URL is reachable
  * @param {string} url - URL to check
- * @param {number} timeout - Timeout in milliseconds
- * @returns {Promise<boolean>} True if URL is reachable
+ * @returns {Promise<boolean>} Reachability status
  */
-const isUrlReachable = async (url, timeout = 5000) => {
+export const isUrlReachable = async (url) => {
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeout);
-    
-    const response = await fetch(url, {
-      method: 'HEAD',
-      signal: controller.signal
-    });
-    
-    clearTimeout(timeoutId);
+    const response = await fetch(url, { method: 'HEAD' });
     return response.ok;
   } catch {
     return false;
@@ -178,219 +226,27 @@ const isUrlReachable = async (url, timeout = 5000) => {
 };
 
 /**
- * Get IP address
- * @returns {Promise<string>} IP address
+ * Get domain information
+ * @param {string} url - URL to analyze
+ * @returns {Object} Domain information
  */
-const getIPAddress = async () => {
+export const getDomainInfo = (url) => {
   try {
-    const response = await fetch('https://api.ipify.org?format=json');
-    const data = await response.json();
-    return data.ip;
-  } catch {
-    return 'Unknown';
-  }
-};
-
-/**
- * Get geolocation from IP
- * @param {string} ip - IP address
- * @returns {Promise<Object>} Geolocation data
- */
-const getGeolocationFromIP = async (ip) => {
-  try {
-    const response = await fetch(`https://ipapi.co/${ip}/json/`);
-    return await response.json();
-  } catch {
-    return null;
-  }
-};
-
-/**
- * Test network speed
- * @param {string} testUrl - URL for speed test
- * @returns {Promise<Object>} Speed test results
- */
-const testNetworkSpeed = async (testUrl = 'https://httpbin.org/bytes/1024') => {
-  const startTime = performance.now();
-  
-  try {
-    const response = await fetch(testUrl);
-    const endTime = performance.now();
-    
-    const duration = endTime - startTime;
-    const size = response.headers.get('content-length') || 1024;
-    const speed = (size * 8) / (duration / 1000); // bits per second
+    const urlObj = new URL(url);
     
     return {
-      duration,
-      size,
-      speed,
-      speedMbps: speed / (1024 * 1024)
+      protocol: urlObj.protocol,
+      hostname: urlObj.hostname,
+      port: urlObj.port,
+      pathname: urlObj.pathname,
+      search: urlObj.search,
+      hash: urlObj.hash,
+      origin: urlObj.origin,
+      subdomain: urlObj.hostname.split('.').slice(0, -2).join('.'),
+      domain: urlObj.hostname.split('.').slice(-2).join('.'),
+      tld: urlObj.hostname.split('.').pop()
     };
   } catch (error) {
-    throw new Error('Speed test failed');
+    throw new Error('Invalid URL');
   }
-};
-
-/**
- * Create WebSocket connection
- * @param {string} url - WebSocket URL
- * @param {Object} options - Connection options
- * @returns {WebSocket} WebSocket instance
- */
-const createWebSocket = (url, options = {}) => {
-  const {
-    protocols = [],
-    onOpen = null,
-    onMessage = null,
-    onClose = null,
-    onError = null
-  } = options;
-  
-  const ws = new WebSocket(url, protocols);
-  
-  if (onOpen) ws.onopen = onOpen;
-  if (onMessage) ws.onmessage = onMessage;
-  if (onClose) ws.onclose = onClose;
-  if (onError) ws.onerror = onError;
-  
-  return ws;
-};
-
-/**
- * Send data via WebSocket
- * @param {WebSocket} ws - WebSocket instance
- * @param {*} data - Data to send
- * @returns {boolean} True if sent successfully
- */
-const sendWebSocketData = (ws, data) => {
-  if (ws.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify(data));
-    return true;
-  }
-  return false;
-};
-
-/**
- * Close WebSocket connection
- * @param {WebSocket} ws - WebSocket instance
- * @param {number} code - Close code
- * @param {string} reason - Close reason
- */
-const closeWebSocket = (ws, code = 1000, reason = 'Normal closure') => {
-  if (ws.readyState === WebSocket.OPEN) {
-    ws.close(code, reason);
-  }
-};
-
-/**
- * Check if WebSocket is supported
- * @returns {boolean} True if WebSocket is supported
- */
-const isWebSocketSupported = () => {
-  return typeof WebSocket !== 'undefined';
-};
-
-/**
- * Get network status
- * @returns {Object} Network status
- */
-const getNetworkStatus = () => {
-  return {
-    online: isOnline(),
-    connection: getNetworkInfo(),
-    webSocketSupported: isWebSocketSupported()
-  };
-};
-
-/**
- * Monitor network changes
- * @param {Function} callback - Callback function
- * @returns {Function} Unsubscribe function
- */
-const monitorNetworkChanges = (callback) => {
-  if (typeof window === 'undefined') return () => {};
-  
-  const handleOnline = () => callback({ type: 'online' });
-  const handleOffline = () => callback({ type: 'offline' });
-  
-  window.addEventListener('online', handleOnline);
-  window.addEventListener('offline', handleOffline);
-  
-  return () => {
-    window.removeEventListener('online', handleOnline);
-    window.removeEventListener('offline', handleOffline);
-  };
-};
-
-/**
- * Retry network request
- * @param {Function} requestFn - Request function
- * @param {number} maxRetries - Maximum retry attempts
- * @param {number} delay - Delay between retries
- * @returns {Promise} Request promise
- */
-const retryRequest = async (requestFn, maxRetries = 3, delay = 1000) => {
-  let lastError;
-  
-  for (let i = 0; i < maxRetries; i++) {
-    try {
-      return await requestFn();
-    } catch (error) {
-      lastError = error;
-      if (i < maxRetries - 1) {
-        await new Promise(resolve => setTimeout(resolve, delay));
-      }
-    }
-  }
-  
-  throw lastError;
-};
-
-/**
- * Batch network requests
- * @param {Array} requests - Array of request functions
- * @param {number} concurrency - Maximum concurrent requests
- * @returns {Promise<Array>} Results array
- */
-const batchRequests = async (requests, concurrency = 5) => {
-  const results = [];
-  const executing = [];
-  
-  for (const request of requests) {
-    const promise = request().then(result => {
-      results.push(result);
-      return result;
-    });
-    
-    executing.push(promise);
-    
-    if (executing.length >= concurrency) {
-      await Promise.race(executing);
-      executing.splice(executing.findIndex(p => p === promise), 1);
-    }
-  }
-  
-  await Promise.all(executing);
-  return results;
-};
-
-module.exports = {
-  isOnline,
-  getNetworkInfo,
-  makeRequest,
-  downloadFile,
-  uploadFile,
-  isUrlReachable,
-  getIPAddress,
-  getGeolocationFromIP,
-  testNetworkSpeed,
-  createWebSocket,
-  sendWebSocketData,
-  closeWebSocket,
-  isWebSocketSupported,
-  getNetworkStatus,
-  monitorNetworkChanges,
-  retryRequest,
-  batchRequests
 };
