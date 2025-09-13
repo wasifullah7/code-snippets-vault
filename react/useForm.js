@@ -1,311 +1,225 @@
+import { useCallback, useEffect, useState } from 'react';
+
 /**
- * Custom React hook for form state management with validation
+ * useForm - form state management hook
  * @param {Object} initialValues - Initial form values
- * @param {Object} validationSchema - Validation schema (optional)
- * @param {Function} onSubmit - Form submission handler
- * @param {Object} options - Configuration options
- * @param {boolean} options.validateOnChange - Validate on value change (default: true)
- * @param {boolean} options.validateOnBlur - Validate on field blur (default: true)
- * @param {boolean} options.validateOnSubmit - Validate on form submission (default: true)
- * @returns {Object} Form state and utilities
+ * @param {Object} validation - Validation rules
+ * @param {Function} onSubmit - Submit handler
+ * @returns {Object} Form state and handlers
  */
-import { useState, useCallback, useEffect } from 'react';
-
-function useForm(initialValues = {}, validationSchema = null, onSubmit = null, options = {}) {
-  const {
-    validateOnChange = true,
-    validateOnBlur = true,
-    validateOnSubmit = true
-  } = options;
-
+export default function useForm(initialValues = {}, validation = {}, onSubmit) {
   const [values, setValues] = useState(initialValues);
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isValid, setIsValid] = useState(true);
-  const [isDirty, setIsDirty] = useState(false);
+  const [submitCount, setSubmitCount] = useState(0);
 
-  // Check if form is dirty
-  useEffect(() => {
-    const dirty = Object.keys(values).some(key => 
-      JSON.stringify(values[key]) !== JSON.stringify(initialValues[key])
-    );
-    setIsDirty(dirty);
-  }, [values, initialValues]);
-
-  // Validate single field
+  // Validation function
   const validateField = useCallback((name, value) => {
-    if (!validationSchema || !validationSchema[name]) return '';
+    const rules = validation[name];
+    if (!rules) return '';
 
-    const fieldValidation = validationSchema[name];
-    let error = '';
-
-    // Required validation
-    if (fieldValidation.required && (!value || value.toString().trim() === '')) {
-      error = fieldValidation.required === true ? `${name} is required` : fieldValidation.required;
+    for (const rule of rules) {
+      const error = rule(value, values);
+      if (error) return error;
     }
-
-    // Min length validation
-    if (!error && fieldValidation.minLength && value && value.toString().length < fieldValidation.minLength) {
-      error = fieldValidation.minLengthMessage || `${name} must be at least ${fieldValidation.minLength} characters`;
-    }
-
-    // Max length validation
-    if (!error && fieldValidation.maxLength && value && value.toString().length > fieldValidation.maxLength) {
-      error = fieldValidation.maxLengthMessage || `${name} must be no more than ${fieldValidation.maxLength} characters`;
-    }
-
-    // Pattern validation
-    if (!error && fieldValidation.pattern && value && !fieldValidation.pattern.test(value)) {
-      error = fieldValidation.patternMessage || `${name} format is invalid`;
-    }
-
-    // Custom validation
-    if (!error && fieldValidation.validate) {
-      const customError = fieldValidation.validate(value, values);
-      if (customError) error = customError;
-    }
-
-    return error;
-  }, [validationSchema, values]);
+    return '';
+  }, [validation, values]);
 
   // Validate all fields
   const validateForm = useCallback(() => {
-    if (!validationSchema) return {};
-
     const newErrors = {};
-    Object.keys(validationSchema).forEach(fieldName => {
-      const error = validateField(fieldName, values[fieldName] || '');
+    let isValid = true;
+
+    Object.keys(values).forEach(key => {
+      const error = validateField(key, values[key]);
       if (error) {
-        newErrors[fieldName] = error;
+        newErrors[key] = error;
+        isValid = false;
       }
     });
 
     setErrors(newErrors);
-    setIsValid(Object.keys(newErrors).length === 0);
-    return newErrors;
-  }, [validationSchema, validateField, values]);
+    return isValid;
+  }, [values, validateField]);
 
-  // Handle field change
-  const handleChange = useCallback((name, value) => {
+  // Set field value
+  const setValue = useCallback((name, value) => {
     setValues(prev => ({ ...prev, [name]: value }));
     
-    if (validateOnChange) {
-      const error = validateField(name, value);
-      setErrors(prev => ({ ...prev, [name]: error }));
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: '' }));
     }
-  }, [validateOnChange, validateField]);
+  }, [errors]);
 
-  // Handle field blur
-  const handleBlur = useCallback((name) => {
+  // Set field touched
+  const setTouchedField = useCallback((name) => {
     setTouched(prev => ({ ...prev, [name]: true }));
+  }, []);
+
+  // Handle input change
+  const handleChange = useCallback((e) => {
+    const { name, value, type, checked } = e.target;
+    const fieldValue = type === 'checkbox' ? checked : value;
+    setValue(name, fieldValue);
+  }, [setValue]);
+
+  // Handle input blur
+  const handleBlur = useCallback((e) => {
+    const { name, value } = e.target;
+    setTouchedField(name);
     
-    if (validateOnBlur) {
-      const error = validateField(name, values[name]);
+    // Validate field on blur
+    const error = validateField(name, value);
+    if (error) {
       setErrors(prev => ({ ...prev, [name]: error }));
     }
-  }, [validateOnBlur, validateField, values]);
+  }, [setTouchedField, validateField]);
 
-  // Handle form submission
+  // Handle form submit
   const handleSubmit = useCallback(async (e) => {
-    if (e) e.preventDefault();
+    e?.preventDefault();
     
     setIsSubmitting(true);
+    setSubmitCount(prev => prev + 1);
     
-    try {
-      // Mark all fields as touched
-      const allTouched = {};
-      Object.keys(initialValues).forEach(key => {
-        allTouched[key] = true;
-      });
-      setTouched(allTouched);
-
-      // Validate form
-      let formErrors = {};
-      if (validateOnSubmit) {
-        formErrors = validateForm();
+    // Mark all fields as touched
+    const allTouched = {};
+    Object.keys(values).forEach(key => {
+      allTouched[key] = true;
+    });
+    setTouched(allTouched);
+    
+    // Validate form
+    const isValid = validateForm();
+    
+    if (isValid && onSubmit) {
+      try {
+        await onSubmit(values, { setFieldError, setFieldValue, resetForm });
+      } catch (error) {
+        console.error('Form submission error:', error);
       }
-
-      if (Object.keys(formErrors).length === 0) {
-        if (onSubmit) {
-          await onSubmit(values, { setSubmitting: setIsSubmitting });
-        }
-      } else {
-        setIsSubmitting(false);
-      }
-    } catch (error) {
-      console.error('Form submission error:', error);
-      setIsSubmitting(false);
     }
-  }, [validateOnSubmit, validateForm, onSubmit, values, initialValues]);
+    
+    setIsSubmitting(false);
+  }, [values, validateForm, onSubmit]);
 
   // Reset form
-  const resetForm = useCallback((newValues = initialValues) => {
-    setValues(newValues);
+  const resetForm = useCallback(() => {
+    setValues(initialValues);
     setErrors({});
     setTouched({});
     setIsSubmitting(false);
-    setIsValid(true);
-    setIsDirty(false);
+    setSubmitCount(0);
   }, [initialValues]);
-
-  // Set field value
-  const setFieldValue = useCallback((name, value) => {
-    handleChange(name, value);
-  }, [handleChange]);
 
   // Set field error
   const setFieldError = useCallback((name, error) => {
     setErrors(prev => ({ ...prev, [name]: error }));
   }, []);
 
-  // Set field touched
-  const setFieldTouched = useCallback((name, touched = true) => {
-    setTouched(prev => ({ ...prev, [name]: touched }));
-  }, []);
-
-  // Get field props for input elements
-  const getFieldProps = useCallback((name) => {
-    return {
-      name,
-      value: values[name] || '',
-      onChange: (e) => handleChange(name, e.target.value),
-      onBlur: () => handleBlur(name),
-      error: errors[name],
-      touched: touched[name]
-    };
-  }, [values, errors, touched, handleChange, handleBlur]);
-
-  // Check if field has error
-  const hasError = useCallback((name) => {
-    return !!(errors[name] && touched[name]);
-  }, [errors, touched]);
-
-  // Get field error message
-  const getFieldError = useCallback((name) => {
-    return hasError(name) ? errors[name] : '';
-  }, [hasError, errors]);
+  // Set field value (external)
+  const setFieldValue = useCallback((name, value) => {
+    setValue(name, value);
+  }, [setValue]);
 
   // Check if form is valid
-  const isFormValid = useCallback(() => {
-    return Object.keys(errors).length === 0 && Object.keys(values).length > 0;
-  }, [errors, values]);
+  const isValid = Object.keys(errors).length === 0 || 
+    Object.values(errors).every(error => error === '');
 
-  // Get form state summary
-  const getFormState = useCallback(() => {
-    return {
-      values,
-      errors,
-      touched,
-      isSubmitting,
-      isValid: isFormValid(),
-      isDirty,
-      hasErrors: Object.keys(errors).length > 0,
-      errorCount: Object.keys(errors).length,
-      touchedCount: Object.keys(touched).filter(key => touched[key]).length
-    };
-  }, [values, errors, touched, isSubmitting, isFormValid, isDirty]);
+  // Check if form is dirty
+  const isDirty = JSON.stringify(values) !== JSON.stringify(initialValues);
 
   return {
-    // Form state
     values,
     errors,
     touched,
     isSubmitting,
+    submitCount,
     isValid,
     isDirty,
-    
-    // Form handlers
     handleChange,
     handleBlur,
     handleSubmit,
     resetForm,
-    
-    // Field utilities
+    setValue,
     setFieldValue,
     setFieldError,
-    setFieldTouched,
-    getFieldProps,
-    hasError,
-    getFieldError,
-    
-    // Form utilities
-    validateForm,
-    isFormValid,
-    getFormState
+    setTouchedField,
+    validateField,
+    validateForm
   };
 }
 
-// Example validation schema:
-// const validationSchema = {
-//   email: {
-//     required: 'Email is required',
-//     pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-//     patternMessage: 'Please enter a valid email address'
-//   },
-//   password: {
-//     required: 'Password is required',
-//     minLength: 8,
-//     minLengthMessage: 'Password must be at least 8 characters',
-//     validate: (value) => {
-//       if (!/(?=.*[a-z])/.test(value)) return 'Password must contain at least one lowercase letter';
-//       if (!/(?=.*[A-Z])/.test(value)) return 'Password must contain at least one uppercase letter';
-//       if (!/(?=.*\d)/.test(value)) return 'Password must contain at least one number';
-//       return '';
-//     }
-//   },
-//   confirmPassword: {
-//     required: 'Please confirm your password',
-//     validate: (value, values) => {
-//       return value !== values.password ? 'Passwords do not match' : '';
-//     }
-//   }
-// };
+// Common validation rules
+export const validationRules = {
+  required: (message = 'This field is required') => (value) => {
+    if (!value || (typeof value === 'string' && !value.trim())) {
+      return message;
+    }
+    return '';
+  },
 
-// Example usage:
-// function LoginForm() {
-//   const form = useForm(
-//     { email: '', password: '' },
-//     validationSchema,
-//     async (values, { setSubmitting }) => {
-//       try {
-//         await loginUser(values);
-//         console.log('Login successful');
-//       } catch (error) {
-//         console.error('Login failed:', error);
-//       } finally {
-//         setSubmitting(false);
-//       }
-//     }
-//   );
-//
-//   const { values, errors, isSubmitting, handleSubmit, getFieldProps, hasError } = form;
-//
-//   return (
-//     <form onSubmit={handleSubmit}>
-//       <div>
-//         <input
-//           {...getFieldProps('email')}
-//           type="email"
-//           placeholder="Email"
-//         />
-//         {hasError('email') && <span className="error">{errors.email}</span>}
-//       </div>
-//
-//       <div>
-//         <input
-//           {...getFieldProps('password')}
-//           type="password"
-//           placeholder="Password"
-//         />
-//         {hasError('password') && <span className="error">{errors.password}</span>}
-//       </div>
-//
-//       <button type="submit" disabled={isSubmitting}>
-//         {isSubmitting ? 'Logging in...' : 'Login'}
-//       </button>
-//     </form>
-//   );
-// }
+  email: (message = 'Please enter a valid email') => (value) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (value && !emailRegex.test(value)) {
+      return message;
+    }
+    return '';
+  },
 
-export default useForm;
+  minLength: (min, message) => (value) => {
+    if (value && value.length < min) {
+      return message || `Must be at least ${min} characters`;
+    }
+    return '';
+  },
+
+  maxLength: (max, message) => (value) => {
+    if (value && value.length > max) {
+      return message || `Must be no more than ${max} characters`;
+    }
+    return '';
+  },
+
+  pattern: (regex, message = 'Invalid format') => (value) => {
+    if (value && !regex.test(value)) {
+      return message;
+    }
+    return '';
+  },
+
+  min: (min, message) => (value) => {
+    if (value && Number(value) < min) {
+      return message || `Must be at least ${min}`;
+    }
+    return '';
+  },
+
+  max: (max, message) => (value) => {
+    if (value && Number(value) > max) {
+      return message || `Must be no more than ${max}`;
+    }
+    return '';
+  },
+
+  match: (matchValue, message = 'Values do not match') => (value) => {
+    if (value !== matchValue) {
+      return message;
+    }
+    return '';
+  },
+
+  custom: (validator, message) => (value) => {
+    try {
+      const result = validator(value);
+      if (result === false) {
+        return message || 'Invalid value';
+      }
+      return '';
+    } catch (error) {
+      return message || 'Validation error';
+    }
+  }
+};
