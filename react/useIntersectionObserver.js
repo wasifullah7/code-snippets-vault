@@ -1,422 +1,400 @@
-/**
- * Custom React hook for Intersection Observer API
- * Advanced intersection observer with multiple features for scroll-based interactions
- */
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 /**
- * Main intersection observer hook
- * @param {Object} options - Intersection observer options
- * @param {Element|string} options.target - Target element or selector
- * @param {Object} options.threshold - Intersection threshold (0-1)
- * @param {string} options.root - Root element selector
+ * Custom React hook for Intersection Observer API
+ * @param {Object} options - Intersection Observer options
+ * @param {Element} options.root - Root element for intersection
  * @param {string} options.rootMargin - Root margin
+ * @param {number|Array} options.threshold - Intersection threshold
  * @param {boolean} options.triggerOnce - Trigger only once
- * @param {boolean} options.disabled - Disable observer
- * @returns {Object} Intersection observer state
+ * @returns {Array} [ref, isIntersecting, entry]
  */
-function useIntersectionObserver(options = {}) {
+export default function useIntersectionObserver(options = {}) {
   const {
-    target,
-    threshold = 0,
     root = null,
     rootMargin = '0px',
-    triggerOnce = false,
-    disabled = false
+    threshold = 0,
+    triggerOnce = false
   } = options;
 
   const [isIntersecting, setIsIntersecting] = useState(false);
-  const [intersectionRatio, setIntersectionRatio] = useState(0);
   const [entry, setEntry] = useState(null);
+  const [hasIntersected, setHasIntersected] = useState(false);
+  
   const targetRef = useRef(null);
-
-  const observerOptions = useMemo(() => ({
-    threshold,
-    root: root ? document.querySelector(root) : null,
-    rootMargin
-  }), [threshold, root, rootMargin]);
+  const observerRef = useRef(null);
 
   const handleIntersection = useCallback((entries) => {
-    const [entry] = entries;
+    const [targetEntry] = entries;
     
-    setIsIntersecting(entry.isIntersecting);
-    setIntersectionRatio(entry.intersectionRatio);
-    setEntry(entry);
-
-    if (triggerOnce && entry.isIntersecting) {
-      // Disconnect observer after first intersection
-      if (targetRef.current) {
-        targetRef.current.disconnect();
+    setEntry(targetEntry);
+    setIsIntersecting(targetEntry.isIntersecting);
+    
+    if (targetEntry.isIntersecting && !hasIntersected) {
+      setHasIntersected(true);
+      
+      // Disconnect observer if triggerOnce is true
+      if (triggerOnce && observerRef.current) {
+        observerRef.current.disconnect();
+        observerRef.current = null;
       }
     }
-  }, [triggerOnce]);
+  }, [triggerOnce, hasIntersected]);
 
   useEffect(() => {
-    if (disabled) return;
-
-    let element = target;
+    const target = targetRef.current;
     
-    // If target is a string, treat as selector
-    if (typeof target === 'string') {
-      element = document.querySelector(target);
-    } else if (targetRef.current) {
-      element = targetRef.current;
-    }
+    if (!target) return;
 
-    if (!element) return;
+    // Create observer
+    observerRef.current = new IntersectionObserver(handleIntersection, {
+      root,
+      rootMargin,
+      threshold
+    });
 
-    const observer = new IntersectionObserver(handleIntersection, observerOptions);
-    observer.observe(element);
-    targetRef.current = observer;
+    // Start observing
+    observerRef.current.observe(target);
 
     return () => {
-      if (observer) {
-        observer.disconnect();
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+        observerRef.current = null;
       }
     };
-  }, [target, disabled, observerOptions, handleIntersection]);
+  }, [handleIntersection, root, rootMargin, threshold]);
+
+  return [targetRef, isIntersecting, entry];
+}
+
+/**
+ * Hook for visibility detection with multiple elements
+ * @param {Object} options - Intersection Observer options
+ * @returns {Object} Visibility state and utilities
+ */
+export function useMultipleIntersectionObserver(options = {}) {
+  const {
+    root = null,
+    rootMargin = '0px',
+    threshold = 0,
+    triggerOnce = false
+  } = options;
+
+  const [intersections, setIntersections] = useState(new Map());
+  const observerRef = useRef(null);
+
+  const handleIntersection = useCallback((entries) => {
+    setIntersections(prev => {
+      const newIntersections = new Map(prev);
+      
+      entries.forEach(entry => {
+        const element = entry.target;
+        const isIntersecting = entry.isIntersecting;
+        
+        newIntersections.set(element, {
+          isIntersecting,
+          entry,
+          hasIntersected: prev.get(element)?.hasIntersected || isIntersecting
+        });
+      });
+      
+      return newIntersections;
+    });
+  }, []);
+
+  useEffect(() => {
+    observerRef.current = new IntersectionObserver(handleIntersection, {
+      root,
+      rootMargin,
+      threshold
+    });
+
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+        observerRef.current = null;
+      }
+    };
+  }, [handleIntersection, root, rootMargin, threshold]);
+
+  const observe = useCallback((element) => {
+    if (observerRef.current && element) {
+      observerRef.current.observe(element);
+    }
+  }, []);
+
+  const unobserve = useCallback((element) => {
+    if (observerRef.current && element) {
+      observerRef.current.unobserve(element);
+    }
+  }, []);
+
+  const isIntersecting = useCallback((element) => {
+    return intersections.get(element)?.isIntersecting || false;
+  }, [intersections]);
+
+  const hasIntersected = useCallback((element) => {
+    return intersections.get(element)?.hasIntersected || false;
+  }, [intersections]);
+
+  const getEntry = useCallback((element) => {
+    return intersections.get(element)?.entry || null;
+  }, [intersections]);
 
   return {
+    observe,
+    unobserve,
     isIntersecting,
-    intersectionRatio,
-    entry,
-    ref: targetRef
+    hasIntersected,
+    getEntry,
+    intersections
   };
 }
 
 /**
  * Hook for lazy loading images
- * @param {Object} options - Lazy loading options
- * @param {string} options.src - Image source
- * @param {string} options.placeholder - Placeholder image
- * @param {string} options.error - Error image
- * @param {number} options.threshold - Intersection threshold
- * @returns {Object} Lazy loading state
+ * @param {Object} options - Intersection Observer options
+ * @returns {Array} [imgRef, isLoaded, isInView]
  */
-function useLazyImage(options = {}) {
+export function useLazyImage(options = {}) {
   const {
-    src,
-    placeholder = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PC9zdmc+',
-    error = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZmYwMDAwIi8+PC9zdmc+',
-    threshold = 0.1
+    root = null,
+    rootMargin = '50px',
+    threshold = 0,
+    ...observerOptions
   } = options;
 
-  const [imageSrc, setImageSrc] = useState(placeholder);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isInView, setIsInView] = useState(false);
   const [hasError, setHasError] = useState(false);
-
-  const { isIntersecting } = useIntersectionObserver({
+  
+  const imgRef = useRef(null);
+  const [ref, isIntersecting] = useIntersectionObserver({
+    root,
+    rootMargin,
     threshold,
-    triggerOnce: true
+    ...observerOptions
   });
 
+  // Combine refs
+  const combinedRef = useCallback((node) => {
+    imgRef.current = node;
+    if (typeof ref === 'function') {
+      ref(node);
+    } else if (ref && ref.current !== undefined) {
+      ref.current = node;
+    }
+  }, [ref]);
+
   useEffect(() => {
-    if (!isIntersecting || !src) return;
-
-    const img = new Image();
+    setIsInView(isIntersecting);
     
-    img.onload = () => {
-      setImageSrc(src);
-      setIsLoaded(true);
-      setHasError(false);
-    };
+    if (isIntersecting && !isLoaded && !hasError) {
+      const img = imgRef.current;
+      if (img && img.src) {
+        img.onload = () => setIsLoaded(true);
+        img.onerror = () => setHasError(true);
+      }
+    }
+  }, [isIntersecting, isLoaded, hasError]);
 
-    img.onerror = () => {
-      setImageSrc(error);
-      setHasError(true);
-      setIsLoaded(false);
-    };
+  const retry = useCallback(() => {
+    setHasError(false);
+    setIsLoaded(false);
+  }, []);
 
-    img.src = src;
-  }, [isIntersecting, src, error]);
-
-  return {
-    src: imageSrc,
-    isLoaded,
-    hasError,
-    isIntersecting
-  };
+  return [combinedRef, isLoaded, isInView, hasError, retry];
 }
 
 /**
  * Hook for infinite scrolling
- * @param {Object} options - Infinite scroll options
- * @param {Function} options.onLoadMore - Load more callback
- * @param {boolean} options.hasMore - Whether there's more data
- * @param {number} options.threshold - Intersection threshold
- * @param {number} options.delay - Delay between loads
- * @returns {Object} Infinite scroll state
+ * @param {Function} loadMore - Function to load more data
+ * @param {Object} options - Intersection Observer options
+ * @returns {Array} [sentinelRef, isLoading, hasMore]
  */
-function useInfiniteScroll(options = {}) {
+export function useInfiniteScroll(loadMore, options = {}) {
   const {
-    onLoadMore,
+    root = null,
+    rootMargin = '100px',
+    threshold = 0,
     hasMore = true,
-    threshold = 0.1,
-    delay = 100
+    isLoading = false,
+    ...observerOptions
   } = options;
 
-  const [isLoading, setIsLoading] = useState(false);
-  const timeoutRef = useRef(null);
-
-  const { isIntersecting } = useIntersectionObserver({
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMoreData, setHasMoreData] = useState(hasMore);
+  
+  const sentinelRef = useRef(null);
+  const [ref, isIntersecting] = useIntersectionObserver({
+    root,
+    rootMargin,
     threshold,
-    triggerOnce: false
+    ...observerOptions
   });
 
+  // Combine refs
+  const combinedRef = useCallback((node) => {
+    sentinelRef.current = node;
+    if (typeof ref === 'function') {
+      ref(node);
+    } else if (ref && ref.current !== undefined) {
+      ref.current = node;
+    }
+  }, [ref]);
+
   useEffect(() => {
-    if (!isIntersecting || !hasMore || isLoading) return;
+    setHasMoreData(hasMore);
+  }, [hasMore]);
 
-    setIsLoading(true);
-    
-    timeoutRef.current = setTimeout(async () => {
-      try {
-        await onLoadMore();
-      } catch (error) {
-        console.error('Infinite scroll error:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    }, delay);
+  useEffect(() => {
+    if (isIntersecting && hasMoreData && !isLoading && !isLoadingMore) {
+      setIsLoadingMore(true);
+      
+      const loadData = async () => {
+        try {
+          await loadMore();
+        } catch (error) {
+          console.error('Error loading more data:', error);
+        } finally {
+          setIsLoadingMore(false);
+        }
+      };
+      
+      loadData();
+    }
+  }, [isIntersecting, hasMoreData, isLoading, isLoadingMore, loadMore]);
 
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, [isIntersecting, hasMore, isLoading, onLoadMore, delay]);
-
-  return {
-    isLoading,
-    isIntersecting
-  };
+  return [combinedRef, isLoadingMore, hasMoreData];
 }
 
 /**
  * Hook for scroll-based animations
- * @param {Object} options - Animation options
- * @param {string} options.animation - CSS animation class
- * @param {number} options.threshold - Intersection threshold
- * @param {boolean} options.triggerOnce - Trigger only once
- * @param {number} options.delay - Animation delay
- * @returns {Object} Animation state
+ * @param {Object} options - Intersection Observer options
+ * @returns {Array} [ref, isVisible, animationState]
  */
-function useScrollAnimation(options = {}) {
+export function useScrollAnimation(options = {}) {
   const {
-    animation = 'fade-in',
+    root = null,
+    rootMargin = '0px',
     threshold = 0.1,
     triggerOnce = true,
-    delay = 0
+    animationType = 'fadeIn',
+    delay = 0,
+    ...observerOptions
   } = options;
 
   const [isVisible, setIsVisible] = useState(false);
-  const [hasAnimated, setHasAnimated] = useState(false);
-
-  const { isIntersecting } = useIntersectionObserver({
+  const [animationState, setAnimationState] = useState('hidden');
+  
+  const [ref, isIntersecting] = useIntersectionObserver({
+    root,
+    rootMargin,
     threshold,
-    triggerOnce
+    triggerOnce,
+    ...observerOptions
   });
 
   useEffect(() => {
-    if (!isIntersecting || (triggerOnce && hasAnimated)) return;
-
-    const timer = setTimeout(() => {
+    if (isIntersecting) {
       setIsVisible(true);
-      setHasAnimated(true);
-    }, delay);
+      
+      if (delay > 0) {
+        setTimeout(() => {
+          setAnimationState('visible');
+        }, delay);
+      } else {
+        setAnimationState('visible');
+      }
+    } else if (!triggerOnce) {
+      setIsVisible(false);
+      setAnimationState('hidden');
+    }
+  }, [isIntersecting, delay, triggerOnce]);
 
-    return () => clearTimeout(timer);
-  }, [isIntersecting, triggerOnce, hasAnimated, delay]);
-
-  return {
-    isVisible,
-    hasAnimated,
-    className: isVisible ? animation : ''
+  const animationClasses = {
+    fadeIn: animationState === 'visible' ? 'animate-fade-in' : 'opacity-0',
+    slideUp: animationState === 'visible' ? 'animate-slide-up' : 'translate-y-8 opacity-0',
+    slideDown: animationState === 'visible' ? 'animate-slide-down' : '-translate-y-8 opacity-0',
+    slideLeft: animationState === 'visible' ? 'animate-slide-left' : 'translate-x-8 opacity-0',
+    slideRight: animationState === 'visible' ? 'animate-slide-right' : '-translate-x-8 opacity-0',
+    scale: animationState === 'visible' ? 'animate-scale' : 'scale-0 opacity-0',
+    rotate: animationState === 'visible' ? 'animate-rotate' : 'rotate-180 opacity-0'
   };
+
+  return [ref, isVisible, animationState, animationClasses[animationType]];
 }
 
 /**
  * Hook for sticky elements
- * @param {Object} options - Sticky options
- * @param {number} options.offset - Sticky offset
- * @param {string} options.position - Sticky position
- * @returns {Object} Sticky state
+ * @param {Object} options - Intersection Observer options
+ * @returns {Array} [ref, isSticky, stickyState]
  */
-function useSticky(options = {}) {
+export function useSticky(options = {}) {
   const {
-    offset = 0,
-    position = 'top'
+    root = null,
+    rootMargin = '0px',
+    threshold = 0,
+    ...observerOptions
   } = options;
 
   const [isSticky, setIsSticky] = useState(false);
-  const [stickyStyle, setStickyStyle] = useState({});
-
-  const { isIntersecting, entry } = useIntersectionObserver({
-    threshold: 0,
-    triggerOnce: false
-  });
-
-  useEffect(() => {
-    if (!entry) return;
-
-    const rect = entry.boundingClientRect;
-    const isStickyNow = !isIntersecting && rect[position] <= offset;
-
-    setIsSticky(isStickyNow);
-
-    if (isStickyNow) {
-      setStickyStyle({
-        position: 'fixed',
-        [position]: offset + 'px',
-        width: rect.width + 'px',
-        zIndex: 1000
-      });
-    } else {
-      setStickyStyle({});
-    }
-  }, [isIntersecting, entry, offset, position]);
-
-  return {
-    isSticky,
-    stickyStyle
-  };
-}
-
-/**
- * Hook for viewport tracking
- * @param {Object} options - Viewport options
- * @param {number} options.threshold - Intersection threshold
- * @returns {Object} Viewport state
- */
-function useViewport(options = {}) {
-  const { threshold = 0 } = options;
-
-  const { isIntersecting, intersectionRatio, entry } = useIntersectionObserver({
+  const [stickyState, setStickyState] = useState('normal');
+  
+  const [ref, isIntersecting, entry] = useIntersectionObserver({
+    root,
+    rootMargin,
     threshold,
-    triggerOnce: false
-  });
-
-  const viewportState = useMemo(() => {
-    if (!entry) return {};
-
-    const rect = entry.boundingClientRect;
-    const isFullyVisible = intersectionRatio >= 1;
-    const isPartiallyVisible = intersectionRatio > 0;
-    const isAboveViewport = rect.bottom < 0;
-    const isBelowViewport = rect.top > window.innerHeight;
-
-    return {
-      isFullyVisible,
-      isPartiallyVisible,
-      isAboveViewport,
-      isBelowViewport,
-      visibilityPercentage: Math.round(intersectionRatio * 100),
-      distanceFromTop: rect.top,
-      distanceFromBottom: rect.bottom
-    };
-  }, [entry, intersectionRatio]);
-
-  return {
-    isIntersecting,
-    intersectionRatio,
-    ...viewportState
-  };
-}
-
-/**
- * Hook for scroll progress
- * @param {Object} options - Progress options
- * @param {string} options.target - Target element
- * @param {string} options.direction - Progress direction
- * @returns {Object} Progress state
- */
-function useScrollProgress(options = {}) {
-  const {
-    target = null,
-    direction = 'vertical'
-  } = options;
-
-  const [progress, setProgress] = useState(0);
-  const { entry } = useIntersectionObserver({
-    target,
-    threshold: Array.from({ length: 101 }, (_, i) => i / 100),
-    triggerOnce: false
+    ...observerOptions
   });
 
   useEffect(() => {
-    if (!entry) return;
-
-    const rect = entry.boundingClientRect;
-    const containerHeight = window.innerHeight;
-    
-    let currentProgress = 0;
-
-    if (direction === 'vertical') {
-      const elementHeight = rect.height;
-      const elementTop = rect.top;
+    if (entry) {
+      const { intersectionRatio, boundingClientRect } = entry;
       
-      if (elementTop <= 0 && elementTop + elementHeight >= containerHeight) {
-        // Element is fully in viewport
-        currentProgress = 100;
-      } else if (elementTop <= 0) {
-        // Element is partially scrolled past
-        currentProgress = Math.abs(elementTop) / (elementHeight - containerHeight) * 100;
-      } else if (elementTop + elementHeight <= containerHeight) {
-        // Element is fully scrolled past
-        currentProgress = 100;
-      } else {
-        // Element is entering viewport
-        currentProgress = (containerHeight - elementTop) / elementHeight * 100;
+      if (intersectionRatio < 1 && boundingClientRect.top <= 0) {
+        setIsSticky(true);
+        setStickyState('stuck');
+      } else if (intersectionRatio === 1) {
+        setIsSticky(false);
+        setStickyState('normal');
+      } else if (boundingClientRect.bottom <= 0) {
+        setIsSticky(false);
+        setStickyState('past');
       }
     }
+  }, [entry]);
 
-    setProgress(Math.max(0, Math.min(100, currentProgress)));
-  }, [entry, direction]);
-
-  return {
-    progress,
-    percentage: Math.round(progress)
-  };
+  return [ref, isSticky, stickyState];
 }
 
-// Example usage:
-// const { isIntersecting, intersectionRatio } = useIntersectionObserver({
-//   threshold: 0.5,
-//   triggerOnce: true
-// });
-// 
-// const { src, isLoaded } = useLazyImage({
-//   src: 'https://example.com/image.jpg',
-//   threshold: 0.1
-// });
-// 
-// const { isLoading } = useInfiniteScroll({
-//   onLoadMore: fetchMoreData,
-//   hasMore: hasMoreData
-// });
-// 
-// const { isVisible, className } = useScrollAnimation({
-//   animation: 'slide-in-up',
-//   delay: 200
-// });
-// 
-// const { isSticky, stickyStyle } = useSticky({
-//   offset: 20
-// });
-// 
-// const { isFullyVisible, visibilityPercentage } = useViewport();
-// 
-// const { progress } = useScrollProgress({
-//   target: '.scroll-container'
-// });
+/**
+ * Hook for element visibility percentage
+ * @param {Object} options - Intersection Observer options
+ * @returns {Array} [ref, visibilityPercentage, entry]
+ */
+export function useVisibilityPercentage(options = {}) {
+  const {
+    root = null,
+    rootMargin = '0px',
+    threshold = Array.from({ length: 101 }, (_, i) => i / 100),
+    ...observerOptions
+  } = options;
 
-export {
-  useIntersectionObserver,
-  useLazyImage,
-  useInfiniteScroll,
-  useScrollAnimation,
-  useSticky,
-  useViewport,
-  useScrollProgress
-};
+  const [visibilityPercentage, setVisibilityPercentage] = useState(0);
+  
+  const [ref, isIntersecting, entry] = useIntersectionObserver({
+    root,
+    rootMargin,
+    threshold,
+    ...observerOptions
+  });
 
-export default useIntersectionObserver;
+  useEffect(() => {
+    if (entry) {
+      setVisibilityPercentage(Math.round(entry.intersectionRatio * 100));
+    }
+  }, [entry]);
+
+  return [ref, visibilityPercentage, entry];
+}
